@@ -1,0 +1,5 @@
+select * from member;
+
+
+select a,b from   (select *
+    from member);
