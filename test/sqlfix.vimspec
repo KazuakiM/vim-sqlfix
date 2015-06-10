@@ -1,5 +1,7 @@
 select * from member;
 
 
-select a,b from   (select *
+select a,b, c,  d from   (select *
     from member);
+
+select user_type, count(*) AS count from member group by user_type;
