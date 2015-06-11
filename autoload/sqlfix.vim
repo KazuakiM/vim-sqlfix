@@ -1,14 +1,15 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-"TODO: Yii log message support.
 "TODO: Rails log message support?
 "TODO: Test case.
-"TODO: Yii
 
 "variable {{{
 let s:sqlfixIndentLevel = ! exists('s:sqlfixIndentLevel') ? 0 : s:sqlfixIndentLevel
 let s:sqlfixIndentSize  = ! exists('s:sqlfixIndentSize')  ? 4 : s:sqlfixIndentSize
+let s:sqlfixFrameWork   = ! exists('s:sqlfixFrameWork')   ? {
+    \ 'Yii': '. Bound with'} :
+    \ s:sqlfixFrameWork
 let s:sqlfixKeywordsNewLine = ! exists('s:sqlfixKeywordsNewLine') ?  [
     \ 'alter', 'and',   'begin',  'commit', 'create', 'delete',   'drop',   'from',     'grant',  'group',  'having', 'inner', 'insert', 'left', 'limit', 'lock',
     \ 'or',    'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'unlock', 'update', 'where'] :
@@ -27,35 +28,49 @@ let s:sqlfixKeywordsFunction = ! exists('s:sqlfixKeywordsFunction') ? [
     \ 'year('] :
     \ s:sqlfixKeywordsFunction
 "}}}
+"vital.vim {{{
+let s:V      = vital#of('sqlfix')
+let s:Buffer = s:V.import('Vim.Buffer')
+"}}}
 function! sqlfix#Execute() range abort "{{{
     " Init
     let s:sqlfixReturn = []
+    " Get last selected
+    let a:sqlBody = substitute(s:Buffer.get_last_selected(), '\n\|\r\|\r\n', '', 'g')
 
-    " Parse words.
-    let a:lineLow = ''
-    for a:lineNumber in range(a:firstline, a:lastline)
-        " Trim
-        let a:oldLineLow = ''
-        let a:nowLineLow = tolower(getline(a:lineNumber))
-        while a:oldLineLow !=# a:nowLineLow
-            let a:oldLineLow = a:nowLineLow
-            let a:nowLineLow = substitute(substitute(substitute(a:nowLineLow, '(', '( ', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g')
-        endwhile
-        let a:lineLow = a:lineLow.a:nowLineLow
+    " Supported FrameWork
+    for a:key in keys(s:sqlfixFrameWork)
+        let a:frameWorkIdx = stridx(a:sqlBody, s:sqlfixFrameWork[a:key])
+        if a:frameWorkIdx > -1 && a:key is 'Yii'
+            let a:frameWorkBinds = split(a:sqlBody[a:frameWorkIdx+13:],',\s\+')
+            let a:sqlBody        = a:sqlBody[:a:frameWorkIdx-1]
+            for a:frameWorkBind in a:frameWorkBinds
+                let a:frameWorkParam = split(a:frameWorkBind, '=')
+                let a:sqlBody        = substitute(a:sqlBody, a:frameWorkParam[0], a:frameWorkParam[1], 'g')
+            endfor
+        endif
     endfor
-    "PP '['.expand('<sfile>').':'.a:lineLow.']'
+    "PP '['.expand('<sfile>').':'.a:sqlBody.']'
+
+    " Trim
+    let a:oldLineLow = ''
+    while a:oldLineLow !=# a:sqlBody
+        let a:oldLineLow = a:sqlBody
+        let a:sqlBody    = substitute(substitute(substitute(a:sqlBody, '(', '( ', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g')
+    endwhile
+    "PP '['.expand('<sfile>').':'.a:sqlBody.']'
 
     " Split word.
     let a:functionLevel = 0
     let a:wordBlock     = ''
-    let a:splitLineLow  = split(a:lineLow, ' ')
+    let a:splitLineLow  = split(a:sqlBody, ' ')
     for a:words in a:splitLineLow
-        if count(s:sqlfixKeywordsNewLine, a:words) >= 1
+        if count(s:sqlfixKeywordsNewLine, a:words, 1) >= 1
             call s:sqlfixAddReturn(a:wordBlock)
             let a:wordBlock = toupper(a:words)
-        elseif count(s:sqlfixKeywordsContinue, a:words) >= 1
+        elseif count(s:sqlfixKeywordsContinue, a:words, 1) >= 1
             let a:wordBlock = a:wordBlock.' '.toupper(a:words)
-        elseif count(s:sqlfixKeywordsFunction, a:words) >= 1
+        elseif count(s:sqlfixKeywordsFunction, a:words, 1) >= 1
             if a:functionLevel > 0
                 let a:wordBlock = a:wordBlock.toupper(a:words)
             else
