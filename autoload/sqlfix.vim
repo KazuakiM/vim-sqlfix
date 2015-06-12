@@ -5,18 +5,17 @@ set cpo&vim
 "TODO: Test case.
 
 "variable {{{
-let s:sqlfixIndentLevel = ! exists('s:sqlfixIndentLevel') ? 0 : s:sqlfixIndentLevel
-let s:sqlfixIndentSize  = ! exists('s:sqlfixIndentSize')  ? 4 : s:sqlfixIndentSize
-let s:sqlfixFrameWork   = ! exists('s:sqlfixFrameWork')   ? {
+let s:sqlfixIndentSize  = ! exists('s:sqlfixIndentSize') ? 4 : s:sqlfixIndentSize
+let s:sqlfixFrameWork   = ! exists('s:sqlfixFrameWork')  ? {
     \ 'Yii': '. Bound with'} :
     \ s:sqlfixFrameWork
 let s:sqlfixKeywordsNewLine = ! exists('s:sqlfixKeywordsNewLine') ?  [
-    \ 'alter', 'and',   'begin',  'commit', 'create', 'delete',   'drop',   'from',     'grant',  'group',  'having', 'inner', 'insert', 'left', 'limit', 'lock',
-    \ 'or',    'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'unlock', 'update', 'where'] :
+    \ 'alter', 'and', 'begin', 'commit', 'create', 'delete', 'drop',     'from',   'grant',    'group',  'having', 'inner', 'insert', 'left', 'limit', 'lock',
+    \ 'on',    'or',  'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'unlock', 'update', 'where'] :
     \ s:sqlfixKeywordsNewLine
 let s:sqlfixKeywordsContinue = ! exists('s:sqlfixKeywordsContinue') ? [
     \ 'as',  'asc',  'between', 'by',      'current_date', 'current_time', 'current_timestamp', 'desc', 'distinct', 'in', 'index', 'is', 'join', 'key', 'like',
-    \ 'not', 'null', 'on',      'primary', 'sysdate',      'table',        'tables',            'unique'] :
+    \ 'not', 'null', 'primary', 'sysdate', 'table',        'tables',       'unique'] :
     \ s:sqlfixKeywordsContinue
 let s:sqlfixKeywordsFunction = ! exists('s:sqlfixKeywordsFunction') ? [
     \ 'abs(',      'acos(',  'ascll(',    'asin(',     'atan(',        'atan2(',    'avg(',        'ceiling(',     'char(',      'char_length(',  'concat(',
@@ -34,9 +33,12 @@ let s:Buffer = s:V.import('Vim.Buffer')
 "}}}
 function! sqlfix#Execute() range abort "{{{
     " Init
-    let s:sqlfixReturn = []
+    let s:sqlfixReturn    = []
+    let s:indentLevel     = 0
+    let s:indentLevelFlag = 0
+
     " Get last selected
-    let a:sqlBody = substitute(s:Buffer.get_last_selected(), '\n\|\r\|\r\n', '', 'g')
+    let a:sqlBody = substitute(s:Buffer.get_last_selected(), '\n\|\r\|\r\n', ' ', 'g')
 
     " Supported FrameWork
     for a:key in keys(s:sqlfixFrameWork)
@@ -61,9 +63,9 @@ function! sqlfix#Execute() range abort "{{{
     "PP '['.expand('<sfile>').':'.a:sqlBody.']'
 
     " Split word.
-    let a:functionLevel = 0
-    let a:wordBlock     = ''
-    let a:splitLineLow  = split(a:sqlBody, ' ')
+    let a:functionLevel   = 0
+    let a:wordBlock       = ''
+    let a:splitLineLow    = split(a:sqlBody, ' ')
     for a:words in a:splitLineLow
         if count(s:sqlfixKeywordsNewLine, a:words, 1) >= 1
             call s:sqlfixAddReturn(a:wordBlock)
@@ -80,24 +82,22 @@ function! sqlfix#Execute() range abort "{{{
         elseif stridx(a:words, '(') is 0
             call s:sqlfixAddReturn(a:wordBlock.' '.a:words)
             let a:wordBlock          = ''
-            let s:sqlfixIndentLevel += 1
-        elseif stridx(a:words, ')') > 0
+            let s:indentLevel += 1
+        elseif stridx(a:words, ')') > -1
             if a:functionLevel > 0
                 let a:wordBlock      = a:wordBlock.a:words
                 let a:functionLevel -= 1
             else
-                call s:sqlfixAddReturn(a:wordBlock.' '.a:words)
-                let a:wordBlock          = ''
-                let s:sqlfixIndentLevel -= 1
+                let a:wordBlock       = a:wordBlock.' '.a:words
+                let s:indentLevelFlag = 1
             endif
+        elseif a:functionLevel > 0
+            let a:wordBlock      = a:wordBlock.a:words
+            let a:functionLevel -= 1
         else
-            if a:functionLevel > 0
-                let a:wordBlock      = a:wordBlock.a:words
-                let a:functionLevel -= 1
-            else
-                let a:wordBlock = a:wordBlock.' '.a:words
-            endif
+            let a:wordBlock = a:wordBlock.' '.a:words
         endif
+        "echo s:indentLevel
         "PP '['.expand('<sfile>').':'.a:functionLevel.': '.a:words.': '.a:wordBlock.']'
     endfor
     " Rest wordBlock
@@ -109,15 +109,19 @@ endfunction "}}}
 function! s:sqlfixAddReturn(wordBlock) abort "{{{
     if strlen(a:wordBlock) > 0
         let a:indentString = ''
-        let a:indentMax    = s:sqlfixIndentLevel * s:sqlfixIndentSize
+        let a:indentMax    = s:indentLevel * s:sqlfixIndentSize
         if a:indentMax > 0
             for a:indentIndex in range(a:indentMax)
                 let a:indentString = a:indentString.' '
             endfor
         endif
 
-        "PP '['.expand('<sfile>').':'.a:indentString.': '.a:wordBlock.']'
         call add(s:sqlfixReturn, a:indentString.a:wordBlock)
+        if s:indentLevelFlag is 1
+            let s:indentLevel     -= 1
+            let s:indentLevelFlag  = 0
+        endif
+        "PP '['.expand('<sfile>').':'.a:indentString.': '.a:wordBlock.']'
     endif
 endfunction "}}}
 
