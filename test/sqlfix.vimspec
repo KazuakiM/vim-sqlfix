@@ -9,5 +9,5 @@ select user_type, count(*) AS count from member group by user_type;
 
 SELECT usr.id AS user_id
  FROM user AS usr
- WHERE usr.started_at <= :now AND :now < usr.ended_at
- AND usr.status = :active. Bound with :now='2015-05-08 15:40:17', :active=1
+ WHERE usr.now <= :now AND :now < usr.ended_at
+ AND usr.status = :active. Bound with now='2015-05-08 15:40:17', :active=1

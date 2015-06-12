@@ -3,6 +3,7 @@ set cpo&vim
 
 "TODO: Rails log message support?
 "TODO: Test case.
+"TODO: Keyword completion
 
 "variable {{{
 let s:sqlfixIndentSize  = ! exists('s:sqlfixIndentSize') ? 4 : s:sqlfixIndentSize
@@ -10,21 +11,21 @@ let s:sqlfixFrameWork   = ! exists('s:sqlfixFrameWork')  ? {
     \ 'Yii': '. Bound with'} :
     \ s:sqlfixFrameWork
 let s:sqlfixKeywordsNewLine = ! exists('s:sqlfixKeywordsNewLine') ?  [
-    \ 'alter', 'and', 'begin', 'commit', 'create', 'delete', 'drop',     'from',   'grant',    'group',  'having', 'inner', 'insert', 'left', 'limit', 'lock',
-    \ 'on',    'or',  'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'unlock', 'update', 'where'] :
+    \ 'alter', 'and', 'begin', 'commit', 'create', 'delete', 'drop',     'from',   'grant',    'group', 'having', 'inner',  'insert', 'left', 'limit', 'lock',
+    \ 'on',    'or',  'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'union', 'unlock', 'update', 'where'] :
     \ s:sqlfixKeywordsNewLine
 let s:sqlfixKeywordsContinue = ! exists('s:sqlfixKeywordsContinue') ? [
-    \ 'as',  'asc',  'between', 'by',      'current_date', 'current_time', 'current_timestamp', 'desc', 'distinct', 'in', 'index', 'is', 'join', 'key', 'like',
-    \ 'not', 'null', 'primary', 'sysdate', 'table',        'tables',       'unique'] :
+    \ 'all',  'as',  'asc',  'between', 'by',      'current_date', 'current_time', 'current_timestamp', 'desc', 'distinct', 'in', 'index', 'is', 'join', 'key',
+    \ 'like', 'not', 'null', 'primary', 'sysdate', 'table',        'tables',       'unique'] :
     \ s:sqlfixKeywordsContinue
 let s:sqlfixKeywordsFunction = ! exists('s:sqlfixKeywordsFunction') ? [
-    \ 'abs(',      'acos(',  'ascll(',    'asin(',     'atan(',        'atan2(',    'avg(',        'ceiling(',     'char(',      'char_length(',  'concat(',
-    \ 'cos(',      'cot(',   'count(',    'date_add(', 'date_format(', 'date_sub(', 'dayofmonth(', 'dayname(',     'dayofweek(', 'dayofyear(',    'degrees(',
-    \ 'exp(',      'floor(', 'greatest(', 'hour(',     'initcap(',     'insert(',   'inster(',     'least(',       'left(',      'length(',       'lower(',
-    \ 'ltrim(',    'max(',   'min(',      'minute(',   'mod(',         'month(',    'monthname(',  'now(',         'nullif(',    'octet_length(', 'pi(',
-    \ 'position(', 'pow(',   'radians(',  'rand(',     'repeat(',      'replace(',  'reverse(',    'right(',       'round(',     'rtrim(',        'second(',
-    \ 'sign(',     'sin(',   'sqrt(',     'stddev(',   'substring(',   'sum(',      'tan(',        'time_format(', 'trim(',      'upper(',        'week(',
-    \ 'year('] :
+    \ 'abs(',          'acos(',   'ascll(',    'asin(',         'atan(',        'atan2(',    'avg(',        'ceiling(', 'char(',      'char_length(', 'concat(',
+    \ 'cos(',          'cot(',    'count(',    'date_add(',     'date_format(', 'date_sub(', 'dayofmonth(', 'dayname(', 'dayofweek(', 'dayofyear(',   'degrees(',
+    \ 'exp(',          'floor(',  'greatest(', 'group_concat(', 'hour(',        'ifnull(',   'initcap(',    'insert(',  'inster(',    'least(',       'left(',
+    \ 'length(',       'lower(',  'ltrim(',    'max(',          'min(',         'minute(',   'mod(',        'month(',   'monthname(', 'now(',         'nullif(',
+    \ 'octet_length(', 'pi(',     'position(', 'pow(',          'radians(',     'rand(',     'repeat(',     'replace(', 'reverse(',   'right(',       'round(',
+    \ 'rtrim(',        'second(', 'sign(',     'sin(',          'sqrt(',        'stddev(',   'substring(',  'sum(',     'tan(',       'time_format(', 'trim(',
+    \ 'upper(',        'week(',   'year('] :
     \ s:sqlfixKeywordsFunction
 "}}}
 "vital.vim {{{
@@ -48,57 +49,56 @@ function! sqlfix#Execute() range abort "{{{
             let a:sqlBody        = a:sqlBody[:a:frameWorkIdx-1]
             for a:frameWorkBind in a:frameWorkBinds
                 let a:frameWorkParam = split(a:frameWorkBind, '=')
-                let a:sqlBody        = substitute(a:sqlBody, a:frameWorkParam[0], a:frameWorkParam[1], 'g')
+                if stridx(a:frameWorkParam[0], ':') is -1
+                    let a:sqlBody = substitute(a:sqlBody, ':'.a:frameWorkParam[0], a:frameWorkParam[1], 'g')
+                else
+                    let a:sqlBody = substitute(a:sqlBody,     a:frameWorkParam[0], a:frameWorkParam[1], 'g')
+                endif
             endfor
         endif
     endfor
-    "PP '['.expand('<sfile>').':'.a:sqlBody.']'
+    "PP '['.a:sqlBody.']'
 
     " Trim
     let a:oldLineLow = ''
     while a:oldLineLow !=# a:sqlBody
         let a:oldLineLow = a:sqlBody
-        let a:sqlBody    = substitute(substitute(substitute(a:sqlBody, '(', '( ', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g')
+        let a:sqlBody    = substitute(substitute(substitute(substitute(a:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g')
     endwhile
-    "PP '['.expand('<sfile>').':'.a:sqlBody.']'
+    "PP '['.a:sqlBody.']'
 
     " Split word.
     let a:functionLevel   = 0
     let a:wordBlock       = ''
     let a:splitLineLow    = split(a:sqlBody, ' ')
     for a:words in a:splitLineLow
-        if count(s:sqlfixKeywordsNewLine, a:words, 1) >= 1
-            call s:sqlfixAddReturn(a:wordBlock)
-            let a:wordBlock = toupper(a:words)
-        elseif count(s:sqlfixKeywordsContinue, a:words, 1) >= 1
-            let a:wordBlock = a:wordBlock.' '.toupper(a:words)
-        elseif count(s:sqlfixKeywordsFunction, a:words, 1) >= 1
-            if a:functionLevel > 0
-                let a:wordBlock = a:wordBlock.toupper(a:words)
-            else
-                let a:wordBlock = a:wordBlock.' '.toupper(a:words)
-            endif
+        if count(s:sqlfixKeywordsFunction, a:words, 1) >= 1
+            let a:wordBlock      = a:wordBlock.' '.toupper(a:words)
             let a:functionLevel += 1
         elseif stridx(a:words, '(') is 0
             call s:sqlfixAddReturn(a:wordBlock.' '.a:words)
-            let a:wordBlock          = ''
+            let a:wordBlock    = ''
             let s:indentLevel += 1
         elseif stridx(a:words, ')') > -1
+            let a:wordBlock = a:wordBlock.a:words
             if a:functionLevel > 0
-                let a:wordBlock      = a:wordBlock.a:words
                 let a:functionLevel -= 1
             else
-                let a:wordBlock       = a:wordBlock.' '.a:words
                 let s:indentLevelFlag = 1
             endif
-        elseif a:functionLevel > 0
-            let a:wordBlock      = a:wordBlock.a:words
-            let a:functionLevel -= 1
+        elseif count(s:sqlfixKeywordsContinue, a:words, 1) >= 1
+            let a:wordBlock = a:wordBlock.' '.toupper(a:words)
+        elseif count(s:sqlfixKeywordsNewLine, a:words, 1) >= 1
+            if a:functionLevel > 0
+                let a:wordBlock = a:wordBlock.' '.toupper(a:words)
+            else
+                call s:sqlfixAddReturn(a:wordBlock)
+                let a:wordBlock = toupper(a:words)
+            endif
         else
             let a:wordBlock = a:wordBlock.' '.a:words
         endif
-        "echo s:indentLevel
-        "PP '['.expand('<sfile>').':'.a:functionLevel.': '.a:words.': '.a:wordBlock.']'
+        "echo '['.a:functionLevel.': '.s:indentLevel.': '.s:indentLevelFlag.': '.a:words.': '.a:wordBlock.']'
     endfor
     " Rest wordBlock
     call s:sqlfixAddReturn(a:wordBlock)
@@ -121,7 +121,7 @@ function! s:sqlfixAddReturn(wordBlock) abort "{{{
             let s:indentLevel     -= 1
             let s:indentLevelFlag  = 0
         endif
-        "PP '['.expand('<sfile>').':'.a:indentString.': '.a:wordBlock.']'
+        "PP '['.a:indentString.': '.a:wordBlock.']'
     endif
 endfunction "}}}
 
