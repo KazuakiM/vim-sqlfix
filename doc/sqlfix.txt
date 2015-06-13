@@ -1,0 +1,50 @@
+*sqlfix.txt* SQL pretty print.
+
+Author:  KazuakiM <twitter@NanohaAsOnKai>
+License: MIT License.
+
+==============================================================================
+CONTENTS						*sqlfix-contents*
+
+INTRODUCTION			|sqlfix-introduction|
+INTERFACE			|sqlfix-interface|
+  COMMANDS			  |sqlfix-commands|
+  FUNCTIONS			  |sqlfix-functions|
+USAGE				|sqlfix-usage|
+
+==============================================================================
+INTRODUCTION						*sqlfix-introduction*
+
+This Vim plugin is SQL pretty print.
+vim-sqlfix's goal is support FrameWork application log format.
+
+==============================================================================
+INTERFACE						*sqlfix-interface*
+
+------------------------------------------------------------------------------
+COMMANDS						*sqlfix-commands*
+
+:Sqlfix							*:Sqlfix*
+	Execute |Sqlfix#Normal()|.
+
+:'<,'>Sqlfix						*:'<,'>Sqlfix*
+	Execute |Sqlfix#Visual()|.
+
+------------------------------------------------------------------------------
+FUNCTIONS						*sqlfix-functions*
+
+Sqlfix#Normal()						*Sqlfix#Normal()*
+	The last selected text in visual mode is formatted at SQL.
+
+Sqlfix#Visual()						*Sqlfix#Visual()*
+	Now selected text in visual mode is formatted at SQL.
+
+==============================================================================
+USAGE							*sqlfix-usage*
+
+>
+	NeoBundle 'KazuakiM/vim-sqlfix'
+<
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl
