@@ -1,13 +1,26 @@
-select * from member;
+scriptencoding utf-8
 
+call themis#helper('command').with(themis#helper('assert')).with({'Expect': themis#helper('expect')})
 
-select a,b, c,  d from   (select *
-    from member);
+Describe vim-sqlfix
+  Before all
+  End
 
-select user_type, count(*) AS count from member group by user_type;
+  Describe Sqlfix#Fix()
+    Context Simple
+      Before each
+        %delete _
+        append
+SELECT * FROM member;
+.
+      End
 
+      It is OK case.
+        normal! ggVGy
+        Assert Equals(Sqlfix#Fix(), ['SELECT *','FROM member;'])
+      End
+    End
+  End
+End
 
-SELECT usr.id AS user_id
- FROM user AS usr
- WHERE usr.now <= :now AND :now < usr.ended_at
- AND usr.status = :active. Bound with now='2015-05-08 15:40:17', :active=1
+" vim:fdl=0:sts=2:sw=2:ts=2
