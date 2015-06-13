@@ -1,6 +1,8 @@
+" Basic {{{
 scriptencoding utf-8
-
+set runtimepath+=+=../
 call themis#helper('command').with(themis#helper('assert')).with({'Expect': themis#helper('expect')})
+"}}}
 
 Describe vim-sqlfix
   Before all
@@ -8,6 +10,7 @@ Describe vim-sqlfix
 
   Describe Sqlfix#Fix()
     Context Simple
+      "{{{
       Before each
         %delete _
         append
@@ -24,9 +27,11 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
           \ '    SELECT *',
           \ '    FROM member AS sub_mem) AS mem;'])
       End
+      "}}}
     End
 
     Context Yii
+      "{{{
       Before each
         %delete _
         append
@@ -46,6 +51,7 @@ SELECT mem.id AS member_id
           \ "AND '2091-09-01 00:09:01' < mem.ended_at",
           \ 'AND mem.status = 1'])
       End
+      "}}}
     End
 
   End
