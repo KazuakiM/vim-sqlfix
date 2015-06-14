@@ -3,5 +3,5 @@ if &cp || (exists('g:loaded_sqlfix') && g:loaded_sqlfix)
 endif
 let g:loaded_sqlfix = 1
 
-command! -nargs=0        Sqlfix               :call Sqlfix#Normal()
-command! -nargs=0 -range Sqlfix <line1>,<line2>call Sqlfix#Visual()
+command! -nargs=0        Sqlfix               :call sqlfix#Normal()
+command! -nargs=0 -range Sqlfix <line1>,<line2>call sqlfix#Visual()

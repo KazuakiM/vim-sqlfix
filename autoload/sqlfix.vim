@@ -32,15 +32,15 @@ let s:SqlfixKeywordsFunction = ! exists('s:SqlfixKeywordsFunction') ? [
 "vital.vim {{{
 let s:Buffer = vital#of('sqlfix').import('Vim.Buffer')
 "}}}
-function! Sqlfix#Normal() abort "{{{
-    call Sqlfix#Fix()
+function! sqlfix#Normal() abort "{{{
+    call sqlfix#Fix()
     call append(line('.'), s:SqlfixReturn)
 endfunction "}}}
-function! Sqlfix#Visual() range abort "{{{
-    call Sqlfix#Fix()
+function! sqlfix#Visual() range abort "{{{
+    call sqlfix#Fix()
     call append(a:lastline, s:SqlfixReturn)
 endfunction "}}}
-function! Sqlfix#Fix() abort "{{{
+function! sqlfix#Fix() abort "{{{
     " Init
     let s:SqlfixReturn    = []
     let s:indentLevel     = 0
@@ -132,5 +132,7 @@ function! s:SqlfixAddReturn(wordBlock) abort "{{{
     endif
 endfunction "}}}
 
-let &cpo = s:save_cpo
-unlet s:save_cpo
+if exists('s:save_cpo')
+    let &cpo = s:save_cpo
+    unlet s:save_cpo
+endif
