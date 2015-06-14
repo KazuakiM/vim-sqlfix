@@ -1,6 +1,5 @@
 " Basic {{{
 scriptencoding utf-8
-let g:path = expand('~/test-bundle/'.fnamemodify(expand('<sfile>'), ':t:r'))
 call themis#helper('command').with(themis#helper('assert')).with({'Expect': themis#helper('expect')})
 "}}}
 
