@@ -7,6 +7,7 @@ before_script:
   - git clone https://github.com/thinca/vim-themis --branch v1.4.1 --single-branch --depth 1 /tmp/vim-themis
 
 script:
+  - echo $PATH
   - vim --cmd version --cmd quit
   - /tmp/vim-themis/bin/themis test/ -r --reporter dot
 
