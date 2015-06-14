@@ -25,18 +25,18 @@ INTERFACE						*sqlfix-interface*
 COMMANDS						*sqlfix-commands*
 
 :Sqlfix							*:Sqlfix*
-	Execute |Sqlfix#Normal()|.
+	Execute |sqlfix#Normal()|.
 
 :'<,'>Sqlfix						*:'<,'>Sqlfix*
-	Execute |Sqlfix#Visual()|.
+	Execute |sqlfix#Visual()|.
 
 ------------------------------------------------------------------------------
 FUNCTIONS						*sqlfix-functions*
 
-Sqlfix#Normal()						*Sqlfix#Normal()*
+sqlfix#Normal()						*sqlfix#Normal()*
 	The last selected text in visual mode is formatted at SQL.
 
-Sqlfix#Visual()						*Sqlfix#Visual()*
+sqlfix#Visual()						*sqlfix#Visual()*
 	Now selected text in visual mode is formatted at SQL.
 
 ==============================================================================

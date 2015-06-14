@@ -1,6 +1,6 @@
 " Basic {{{
 scriptencoding utf-8
-let g:path = expand('~/test-bundle/'.fnamemodify(expand('<sfile>'), ':t:r'))
+source ../vim-sqlfix/autoload/sqlfix.vim
 call themis#helper('command').with(themis#helper('assert')).with({'Expect': themis#helper('expect')})
 "}}}
 
@@ -8,7 +8,7 @@ Describe vim-sqlfix
   Before all
   End
 
-  Describe Sqlfix#Fix()
+  Describe sqlfix#Fix()
     Context Simple
       "{{{
       Before each
@@ -21,7 +21,7 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
 
       It is OK case.
         normal! ggVGy
-        Assert Equals(Sqlfix#Fix(), [
+        Assert Equals(sqlfix#Fix(), [
           \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
           \ 'FROM (',
           \ '    SELECT *',
@@ -44,7 +44,7 @@ SELECT mem.id AS member_id
 
       It is OK case.
         normal! ggVGy
-        Assert Equals(Sqlfix#Fix(), [
+        Assert Equals(sqlfix#Fix(), [
           \ 'SELECT mem.id AS member_id',
           \ 'FROM member AS mem',
           \ "WHERE mem.started_at <= '2072-07-02 00:07:02'",
