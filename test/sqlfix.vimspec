@@ -1,8 +1,7 @@
 " Basic {{{
 scriptencoding utf-8
-set runtimepath+=../
 call themis#helper('command').with(themis#helper('assert')).with({'Expect': themis#helper('expect')})
-let g:root = fnamemodify(expand('<sfile>'), ':h:h')
+let a:path = expand('~/test-bundle/'.fnamemodify(expand('<sfile>'), ':t:r'))
 "}}}
 
 Describe vim-sqlfix
