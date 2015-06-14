@@ -19,13 +19,23 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
 .
       End
 
-      It is OK case.
+      It is Normal case.
         normal! ggVGy
         Assert Equals(sqlfix#Fix(), [
           \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
           \ 'FROM (',
           \ '    SELECT *',
           \ '    FROM member AS sub_mem) AS mem;'])
+      End
+      It is g:sqlfix#IndentSize = 2 case.
+        let g:sqlfix#IndentSize = 2
+        normal! ggVGy
+        Assert Equals(sqlfix#Fix(), [
+          \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+          \ 'FROM (',
+          \ '  SELECT *',
+          \ '  FROM member AS sub_mem) AS mem;'])
+        let g:sqlfix#IndentSize = 4
       End
       "}}}
     End

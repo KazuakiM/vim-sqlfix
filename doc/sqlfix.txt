@@ -8,6 +8,7 @@ CONTENTS						*sqlfix-contents*
 
 INTRODUCTION			|sqlfix-introduction|
 INTERFACE			|sqlfix-interface|
+  VARIABLES			  |sqlfix-variables|
   COMMANDS			  |sqlfix-commands|
   FUNCTIONS			  |sqlfix-functions|
 USAGE				|sqlfix-usage|
@@ -20,6 +21,12 @@ vim-sqlfix's goal is support FrameWork application log format.
 
 ==============================================================================
 INTERFACE						*sqlfix-interface*
+
+------------------------------------------------------------------------------
+VARIABLES						*sqlfix-variables*
+
+g:sqlfix#IndentSize = {value}				*g:sqlfix#IndentSize*
+	This variable is indent size setting(Default 4).
 
 ------------------------------------------------------------------------------
 COMMANDS						*sqlfix-commands*
