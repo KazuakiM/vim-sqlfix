@@ -40,6 +40,58 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
       "}}}
     End
 
+    Context SQL puzzle
+      "{{{
+      Before each
+        %delete _
+        append
+(
+  SELECT 'azusa' AS type, mem.id AS member_id, IFNULL(mem.tel, '') AS tel,
+    CASE
+      WHEN mem.address IS NOT NULL THEN mem.address
+      WHEN mem.tel     IS NOT NULL THEN mem.tel
+      ELSE mem.mailaddress END AS mailaddress
+    FROM member mem
+) UNION ALL (
+  SELECT 'chihaya' AS type, lev.id AS leave_id, NULL, NULL
+  FROM leave_member lev
+  INNER JOIN member mem
+  ON ( lev.member_id = mem.id
+    AND mem.leave_date <= '2072-07-02 00:07:02' )
+  WHERE ((lev.year = '2014' AND lev.birthday BETWEEN '2014-02-25 00:00:00' AND DATE_FORMAT('2015-02-25', '%Y-%m-%d 23:59:59')) OR
+         (lev.year = '2015' AND lev.birthday BETWEEN '2014-02-25 00:00:00' AND DATE_FORMAT('2015-02-25', '%Y-%m-%d 23:59:59')))
+)
+ORDER BY type ASC, id ASC;
+.
+      End
+
+      It is chihaya is cute.
+        normal! ggVGy
+        Assert Equals(sqlfix#Fix(), [
+        \ ' (',
+        \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel, CASE WHEN mem.address IS NOT NULL THEN mem.address WHEN mem.tel IS NOT NULL THEN mem.tel ELSE mem.mailaddress END AS mailaddress",
+        \ '    FROM member mem)',
+        \ 'UNION ALL (',
+        \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, NULL, NULL",
+        \ '    FROM leave_member lev',
+        \ '    INNER JOIN member mem',
+        \ '    ON (',
+        \ '         lev.member_id = mem.id',
+        \ "        AND mem.leave_date <= '2072-07-02 00:07:02')",
+        \ '    WHERE (',
+        \ '         (',
+        \ "             lev.year = '2014'",
+        \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
+        \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59'))",
+        \ '        OR (',
+        \ "             lev.year = '2015'",
+        \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
+        \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59'))))",
+        \ 'ORDER BY type ASC, id ASC;'])
+      End
+      "}}}
+    End
+
     Context Yii
       "{{{
       Before each
@@ -59,7 +111,7 @@ SELECT mem.id AS member_id
           \ 'FROM member AS mem',
           \ "WHERE mem.started_at <= '2072-07-02 00:07:02'",
           \ "AND '2091-09-01 00:09:01' < mem.ended_at",
-          \ 'AND mem.status = 1'])
+          \ 'AND mem.status = 1;'])
       End
       "}}}
     End

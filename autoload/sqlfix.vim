@@ -4,7 +4,6 @@ set cpo&vim
 "TODO: Rails log message support? I don't know Rails. So I try Rails.
 "TODO: Keyword completion
 "TODO: Support 1 liner so long
-"TODO: Required END semicolon check.
 
 "variable {{{
 let g:sqlfix#IndentSize = ! exists('g:sqlfix#IndentSize') ? 4 : g:sqlfix#IndentSize
@@ -12,24 +11,24 @@ let s:SqlfixFrameWork   = ! exists('s:SqlfixFrameWork')   ? {
     \ 'Yii': '. Bound with'} :
     \ s:SqlfixFrameWork
 let s:SqlfixKeywordsNewLine = ! exists('s:SqlfixKeywordsNewLine') ?  [
-    \ 'alter', 'and', 'begin', 'commit', 'create', 'delete', 'drop',     'from',   'grant',    'group', 'having', 'inner',  'insert', 'left', 'limit', 'lock',
-    \ 'on',    'or',  'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'union', 'unlock', 'update', 'where'] :
+    \ 'alter',  'and',   'begin',    'commit', 'create',   'delete', 'drop',   'from',   'grant', 'group',
+    \ 'having', 'inner', 'insert',   'left',   'limit',    'lock',   'on',     'or',     'order', 'rename',
+    \ 'revoke', 'right', 'rollback', 'select', 'truncate', 'union',  'unlock', 'update', 'where'] :
     \ s:SqlfixKeywordsNewLine
 let s:SqlfixKeywordsContinue = ! exists('s:SqlfixKeywordsContinue') ? [
-    \ 'all',  'as',  'asc',  'between', 'by',      'current_date', 'current_time', 'current_timestamp', 'desc', 'distinct', 'in', 'index', 'is', 'join', 'key',
-    \ 'like', 'not', 'null', 'primary', 'sysdate', 'table',        'tables',       'unique'] :
+    \ 'all',      'as',    'asc',    'between', 'by',   'case', 'current_date', 'current_time', 'current_timestamp', 'desc',
+    \ 'distinct', 'in',    'index',  'is',      'join', 'key',  'like',         'not',          'null',              'primary',
+    \ 'sysdate',  'table', 'tables', 'unique'] :
     \ s:SqlfixKeywordsContinue
 let s:SqlfixKeywordsFunction = ! exists('s:SqlfixKeywordsFunction') ? [
-    \ 'abs(',          'acos(',   'ascll(',    'asin(',         'atan(',        'atan2(',    'avg(',        'ceiling(', 'char(',      'char_length(', 'concat(',
-    \ 'cos(',          'cot(',    'count(',    'date_add(',     'date_format(', 'date_sub(', 'dayofmonth(', 'dayname(', 'dayofweek(', 'dayofyear(',   'degrees(',
-    \ 'exp(',          'floor(',  'greatest(', 'group_concat(', 'hour(',        'ifnull(',   'initcap(',    'insert(',  'inster(',    'least(',       'left(',
-    \ 'length(',       'lower(',  'ltrim(',    'max(',          'min(',         'minute(',   'mod(',        'month(',   'monthname(', 'now(',         'nullif(',
-    \ 'octet_length(', 'pi(',     'position(', 'pow(',          'radians(',     'rand(',     'repeat(',     'replace(', 'reverse(',   'right(',       'round(',
-    \ 'rtrim(',        'second(', 'sign(',     'sin(',          'sqrt(',        'stddev(',   'substring(',  'sum(',     'tan(',       'time_format(', 'trim(',
-    \ 'upper(',        'week(',   'year('] :
+    \ 'abs(',       'acos(',     'ascll(',     'asin(',    'atan(',     'atan2(',        'avg(',      'ceiling(',    'char(',    'char_length(',
+    \ 'concat(',    'cos(',      'cot(',       'count(',   'date_add(', 'date_format(',  'date_sub(', 'dayofmonth(', 'dayname(', 'dayofweek(',
+    \ 'dayofyear(', 'degrees(',  'exp(',       'floor(',   'greatest(', 'group_concat(', 'hour(',     'ifnull(',     'initcap(', 'insert(',
+    \ 'inster(',    'last_day(', 'least(',     'left(',    'length(',   'lower(',        'ltrim(',    'max(',        'min(',     'minute(',
+    \ 'mod(',       'month(',    'monthname(', 'now(',     'nullif(',   'octet_length(', 'pi(',       'position(',   'pow(',     'radians(',
+    \ 'rand(',      'repeat(',   'replace(',   'reverse(', 'right(',    'round(',        'rtrim(',    'second(',     'sign(',    'sin(',
+    \ 'sqrt(',      'stddev(',   'substring(', 'sum(',     'tan(',      'time_format(',  'trim(',     'upper(',      'week(',    'year('] :
     \ s:SqlfixKeywordsFunction
-"}}}
-"vital.vim {{{
 let s:Buffer = vital#of('sqlfix').import('Vim.Buffer')
 "}}}
 function! sqlfix#Normal() abort "{{{
@@ -42,9 +41,9 @@ function! sqlfix#Visual() range abort "{{{
 endfunction "}}}
 function! sqlfix#Fix() abort "{{{
     " Init
-    let s:SqlfixReturn    = []
-    let s:indentLevel     = 0
-    let s:indentLevelFlag = 0
+    let s:SqlfixReturn     = []
+    let s:indentLevel      = 0
+    let s:indentLevelAfter = 0
 
     " Get last selected
     let l:sqlBody = substitute(s:Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
@@ -71,8 +70,15 @@ function! sqlfix#Fix() abort "{{{
     let l:oldLineLow = ''
     while l:oldLineLow !=# l:sqlBody
         let l:oldLineLow = l:sqlBody
-        let l:sqlBody    = substitute(substitute(substitute(substitute(l:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g')
+        let l:sqlBody    = matchstr(substitute(substitute(substitute(substitute(l:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g'), '^\s*\zs.\{-}\ze\s*$')
     endwhile
+    "PP '['.l:sqlBody.']'
+
+    " Add EndWords
+    let l:sqlBodyLen = strlen(l:sqlBody)
+    if strpart(l:sqlBody, l:sqlBodyLen -1) isnot ';' && strpart(l:sqlBody, l:sqlBodyLen -2) isnot '\G'
+        let l:sqlBody = l:sqlBody.';'
+    endif
     "PP '['.l:sqlBody.']'
 
     " Split word.
@@ -92,7 +98,7 @@ function! sqlfix#Fix() abort "{{{
             if l:functionLevel > 0
                 let l:functionLevel -= 1
             else
-                let s:indentLevelFlag = 1
+                let s:indentLevelAfter += 1
             endif
         elseif count(s:SqlfixKeywordsContinue, l:words, 1) >= 1
             let l:wordBlock = l:wordBlock.' '.toupper(l:words)
@@ -106,7 +112,7 @@ function! sqlfix#Fix() abort "{{{
         else
             let l:wordBlock = l:wordBlock.' '.l:words
         endif
-        "echo '['.l:functionLevel.': '.s:indentLevel.': '.s:indentLevelFlag.': '.l:words.': '.l:wordBlock.']'
+        "echo '['.l:functionLevel.': '.s:indentLevel.': '.s:indentLevelAfter.': '.l:words.': '.l:wordBlock.']'
     endfor
     " Rest wordBlock
     call s:SqlfixAddReturn(l:wordBlock)
@@ -124,9 +130,9 @@ function! s:SqlfixAddReturn(wordBlock) abort "{{{
         endif
 
         call add(s:SqlfixReturn, l:indentString.a:wordBlock)
-        if s:indentLevelFlag is 1
-            let s:indentLevel     -= 1
-            let s:indentLevelFlag  = 0
+        if s:indentLevelAfter > 0
+            let s:indentLevel      -= s:indentLevelAfter
+            let s:indentLevelAfter  = 0
         endif
         "PP '['.l:indentString.': '.a:wordBlock.']'
     endif
