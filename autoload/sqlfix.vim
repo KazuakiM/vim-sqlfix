@@ -11,25 +11,29 @@ let s:SqlfixFrameWork   = ! exists('s:SqlfixFrameWork')   ? {
     \ 'Yii': '. Bound with'} :
     \ s:SqlfixFrameWork
 let s:SqlfixKeywordsNewLine = ! exists('s:SqlfixKeywordsNewLine') ?  [
-    \ 'alter',  'and',   'begin',    'commit', 'create',   'delete', 'drop',   'from',   'grant', 'group',
-    \ 'having', 'inner', 'insert',   'left',   'limit',    'lock',   'on',     'or',     'order', 'rename',
-    \ 'revoke', 'right', 'rollback', 'select', 'truncate', 'union',  'unlock', 'update', 'where'] :
+    \ 'alter',  'and',    'begin', 'case',   'commit', 'create', 'delete',   'drop',   'else',     'elseif',
+    \ 'end',    'from',   'grant', 'group',  'having', 'inner',  'insert',   'left',   'limit',    'lock',
+    \ 'on',     'or',     'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'union',
+    \ 'unlock', 'update', 'when',  'where'] :
     \ s:SqlfixKeywordsNewLine
 let s:SqlfixKeywordsContinue = ! exists('s:SqlfixKeywordsContinue') ? [
-    \ 'all',      'as',    'asc',    'between', 'by',   'case', 'current_date', 'current_time', 'current_timestamp', 'desc',
-    \ 'distinct', 'in',    'index',  'is',      'join', 'key',  'like',         'not',          'null',              'primary',
-    \ 'sysdate',  'table', 'tables', 'unique'] :
+    \ 'add',               'after',   'all',      'as',    'asc',    'between', 'by',   'column', 'current_date', 'current_time',
+    \ 'current_timestamp', 'desc',    'distinct', 'in',    'index',  'is',      'join', 'key',    'like',         'not',
+    \ 'null',              'primary', 'sysdate',  'table', 'tables', 'then',    'unique'] :
     \ s:SqlfixKeywordsContinue
 let s:SqlfixKeywordsFunction = ! exists('s:SqlfixKeywordsFunction') ? [
-    \ 'abs(',       'acos(',     'ascll(',     'asin(',    'atan(',     'atan2(',        'avg(',      'ceiling(',    'char(',    'char_length(',
-    \ 'concat(',    'cos(',      'cot(',       'count(',   'date_add(', 'date_format(',  'date_sub(', 'dayofmonth(', 'dayname(', 'dayofweek(',
-    \ 'dayofyear(', 'degrees(',  'exp(',       'floor(',   'greatest(', 'group_concat(', 'hour(',     'ifnull(',     'initcap(', 'insert(',
-    \ 'inster(',    'last_day(', 'least(',     'left(',    'length(',   'lower(',        'ltrim(',    'max(',        'min(',     'minute(',
-    \ 'mod(',       'month(',    'monthname(', 'now(',     'nullif(',   'octet_length(', 'pi(',       'position(',   'pow(',     'radians(',
-    \ 'rand(',      'repeat(',   'replace(',   'reverse(', 'right(',    'round(',        'rtrim(',    'second(',     'sign(',    'sin(',
-    \ 'sqrt(',      'stddev(',   'substring(', 'sum(',     'tan(',      'time_format(',  'trim(',     'upper(',      'week(',    'year('] :
+    \ 'abs(',       'acos(',    'ascll(',    'asin(',      'atan(',     'atan2(',        'avg(',          'ceiling(',    'char(',     'char_length(',
+    \ 'concat(',    'cos(',     'cot(',      'count(',     'date_add(', 'date_format(',  'date_sub(',     'dayofmonth(', 'dayname(',  'dayofweek(',
+    \ 'dayofyear(', 'degrees(', 'exp(',      'floor(',     'greatest(', 'group_concat(', 'hour(',         'if(',         'ifnull(',   'initcap(',
+    \ 'insert(',    'inster(',  'last_day(', 'least(',     'left(',     'length(',       'lower(',        'ltrim(',      'max(',      'min(',
+    \ 'minute(',    'mod(',     'month(',    'monthname(', 'now(',      'nullif(',       'octet_length(', 'pi(',         'position(', 'pow(',
+    \ 'radians(',   'rand(',    'repeat(',   'replace(',   'reverse(',  'right(',        'round(',        'rtrim(',      'second(',   'sign(',
+    \ 'sin(',       'sqrt(',    'stddev(',   'substring(', 'sum(',      'tan(',          'time_format(',  'trim(',       'upper(',    'week(',
+    \ 'year('] :
     \ s:SqlfixKeywordsFunction
-let s:Buffer = vital#of('sqlfix').import('Vim.Buffer')
+let s:V      = vital#of('sqlfix')
+let s:String = s:V.import('Data.String')
+let s:Buffer = s:V.import('Vim.Buffer')
 "}}}
 function! sqlfix#Normal() abort "{{{
     call sqlfix#Fix()
@@ -41,9 +45,9 @@ function! sqlfix#Visual() range abort "{{{
 endfunction "}}}
 function! sqlfix#Fix() abort "{{{
     " Init
-    let s:SqlfixReturn     = []
-    let s:indentLevel      = 0
-    let s:indentLevelAfter = 0
+    let s:SqlfixReturn       = []
+    let s:SqlfixCloseBracket = 0
+    let s:SqlfixStatus       = []
 
     " Get last selected
     let l:sqlBody = substitute(s:Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
@@ -70,7 +74,8 @@ function! sqlfix#Fix() abort "{{{
     let l:oldLineLow = ''
     while l:oldLineLow !=# l:sqlBody
         let l:oldLineLow = l:sqlBody
-        let l:sqlBody    = matchstr(substitute(substitute(substitute(substitute(l:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g'), '^\s*\zs.\{-}\ze\s*$')
+        let l:sqlBody    = s:String.trim(substitute(substitute(substitute(substitute(
+            \ l:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g'))
     endwhile
     "PP '['.l:sqlBody.']'
 
@@ -82,28 +87,23 @@ function! sqlfix#Fix() abort "{{{
     "PP '['.l:sqlBody.']'
 
     " Split word.
-    let l:functionLevel   = 0
-    let l:wordBlock       = ''
-    let l:splitLineLow    = split(l:sqlBody, ' ')
+    let l:wordBlock    = ''
+    let l:splitLineLow = split(l:sqlBody, ' ')
     for l:words in l:splitLineLow
         if count(s:SqlfixKeywordsFunction, l:words, 1) >= 1
-            let l:wordBlock      = l:wordBlock.' '.toupper(l:words)
-            let l:functionLevel += 1
+            let l:wordBlock = l:wordBlock.' '.toupper(l:words)
+            call add(s:SqlfixStatus, 'function')
         elseif stridx(l:words, '(') is 0
             call s:SqlfixAddReturn(l:wordBlock.' '.l:words)
-            let l:wordBlock    = ''
-            let s:indentLevel += 1
+            call add(s:SqlfixStatus, 'bracket')
+            let l:wordBlock = ''
         elseif stridx(l:words, ')') > -1
-            let l:wordBlock = l:wordBlock.l:words
-            if l:functionLevel > 0
-                let l:functionLevel -= 1
-            else
-                let s:indentLevelAfter += 1
-            endif
+            let l:wordBlock           = l:wordBlock.l:words
+            let s:SqlfixCloseBracket -= 1
         elseif count(s:SqlfixKeywordsContinue, l:words, 1) >= 1
             let l:wordBlock = l:wordBlock.' '.toupper(l:words)
         elseif count(s:SqlfixKeywordsNewLine, l:words, 1) >= 1
-            if l:functionLevel > 0
+            if count(s:SqlfixStatus, 'function') + s:SqlfixCloseBracket > 0
                 let l:wordBlock = l:wordBlock.' '.toupper(l:words)
             else
                 call s:SqlfixAddReturn(l:wordBlock)
@@ -112,7 +112,7 @@ function! sqlfix#Fix() abort "{{{
         else
             let l:wordBlock = l:wordBlock.' '.l:words
         endif
-        "echo '['.l:functionLevel.': '.s:indentLevel.': '.s:indentLevelAfter.': '.l:words.': '.l:wordBlock.']'
+        "echo '['.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:words.': '.l:wordBlock.']'
     endfor
     " Rest wordBlock
     call s:SqlfixAddReturn(l:wordBlock)
@@ -122,7 +122,7 @@ endfunction "}}}
 function! s:SqlfixAddReturn(wordBlock) abort "{{{
     if strlen(a:wordBlock) > 0
         let l:indentString = ''
-        let l:indentMax    = s:indentLevel * g:sqlfix#IndentSize
+        let l:indentMax    = count(s:SqlfixStatus, 'bracket') * g:sqlfix#IndentSize
         if l:indentMax > 0
             for l:indentIndex in range(l:indentMax)
                 let l:indentString = l:indentString.' '
@@ -130,11 +130,11 @@ function! s:SqlfixAddReturn(wordBlock) abort "{{{
         endif
 
         call add(s:SqlfixReturn, l:indentString.a:wordBlock)
-        if s:indentLevelAfter > 0
-            let s:indentLevel      -= s:indentLevelAfter
-            let s:indentLevelAfter  = 0
-        endif
-        "PP '['.l:indentString.': '.a:wordBlock.']'
+        while s:SqlfixCloseBracket < 0
+            call remove(s:SqlfixStatus, -1)
+            let s:SqlfixCloseBracket += 1
+        endwhile
+        "echo '<'.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:indentString.a:wordBlock.'>'
     endif
 endfunction "}}}
 

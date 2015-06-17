@@ -2,4 +2,6 @@ sqlfix
 386a15ed7784c718220c23be6c78498463d9b2a6
 
 Prelude
+Data.List
+Data.String
 Vim.Buffer

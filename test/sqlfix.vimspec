@@ -19,7 +19,7 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
 .
       End
 
-      It is Normal case.
+      It is OK case.
         normal! ggVGy
         Assert Equals(sqlfix#Fix(), [
           \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
@@ -53,13 +53,14 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
       ELSE mem.mailaddress END AS mailaddress
     FROM member mem
 ) UNION ALL (
-  SELECT 'chihaya' AS type, lev.id AS leave_id, NULL, NULL
+  SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM(mem.attribute IN ('hoge', 'huga') AND mem.status = 1) < SUM(mem.attribute IN ('hoge', 'huga') AND mem.status = 0), 0, 1) AS full_status, NULL
   FROM leave_member lev
   INNER JOIN member mem
   ON ( lev.member_id = mem.id
     AND mem.leave_date <= '2072-07-02 00:07:02' )
   WHERE ((lev.year = '2014' AND lev.birthday BETWEEN '2014-02-25 00:00:00' AND DATE_FORMAT('2015-02-25', '%Y-%m-%d 23:59:59')) OR
          (lev.year = '2015' AND lev.birthday BETWEEN '2014-02-25 00:00:00' AND DATE_FORMAT('2015-02-25', '%Y-%m-%d 23:59:59')))
+  GROUP BY lev.id
 )
 ORDER BY type ASC, id ASC;
 .
@@ -69,10 +70,17 @@ ORDER BY type ASC, id ASC;
         normal! ggVGy
         Assert Equals(sqlfix#Fix(), [
         \ ' (',
-        \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel, CASE WHEN mem.address IS NOT NULL THEN mem.address WHEN mem.tel IS NOT NULL THEN mem.tel ELSE mem.mailaddress END AS mailaddress",
+        \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel,",
+        \ '    CASE',
+        \ '    WHEN mem.address IS NOT NULL THEN mem.address',
+        \ '    WHEN mem.tel IS NOT NULL THEN mem.tel',
+        \ '    ELSE mem.mailaddress',
+        \ '    END AS mailaddress',
         \ '    FROM member mem)',
         \ 'UNION ALL (',
-        \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, NULL, NULL",
+        \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM( mem.attribute IN (",
+        \ "         'hoge', 'huga') AND mem.status = 1) < SUM( mem.attribute IN (",
+        \ "         'hoge', 'huga') AND mem.status = 0), 0, 1) AS full_status, NULL",
         \ '    FROM leave_member lev',
         \ '    INNER JOIN member mem',
         \ '    ON (',
@@ -86,7 +94,8 @@ ORDER BY type ASC, id ASC;
         \ '        OR (',
         \ "             lev.year = '2015'",
         \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
-        \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59'))))",
+        \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59')))",
+        \ '    GROUP BY lev.id)',
         \ 'ORDER BY type ASC, id ASC;'])
       End
       "}}}
