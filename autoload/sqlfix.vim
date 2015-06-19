@@ -87,9 +87,8 @@ function! sqlfix#Fix() abort "{{{
     "PP '['.l:sqlBody.']'
 
     " Split word.
-    let l:wordBlock    = ''
-    let l:splitLineLow = split(l:sqlBody, ' ')
-    for l:words in l:splitLineLow
+    let l:wordBlock = ''
+    for l:words in split(l:sqlBody, ' ')
         if count(s:SqlfixKeywordsFunction, l:words, 1) >= 1
             let l:wordBlock = l:wordBlock.' '.toupper(l:words)
             call add(s:SqlfixStatus, 'function')
@@ -117,6 +116,11 @@ function! sqlfix#Fix() abort "{{{
     " Rest wordBlock
     call s:SqlfixAddReturn(l:wordBlock)
 
+    " Check bracket.
+    if s:SqlfixCloseBracket < 0 || len(s:SqlfixStatus) > 0
+        call s:SqlfixWarning(l:wordBlock)
+    endif
+
     return s:SqlfixReturn
 endfunction "}}}
 function! s:SqlfixAddReturn(wordBlock) abort "{{{
@@ -131,11 +135,22 @@ function! s:SqlfixAddReturn(wordBlock) abort "{{{
 
         call add(s:SqlfixReturn, l:indentString.a:wordBlock)
         while s:SqlfixCloseBracket < 0
-            call remove(s:SqlfixStatus, -1)
+            if len(s:SqlfixStatus) > 0
+                call remove(s:SqlfixStatus, -1)
+            else
+                call s:SqlfixWarning(a:wordBlock)
+            endif
             let s:SqlfixCloseBracket += 1
         endwhile
         "echo '<'.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:indentString.a:wordBlock.'>'
     endif
+endfunction "}}}
+function! s:SqlfixWarning(wordBlock) "{{{
+    echohl ErrorMsg
+        echomsg '[WARNING]Would you check a close bracket?'
+        echomsg 'REST:'.join(s:SqlfixStatus).', COUNT:'.s:SqlfixCloseBracket
+        echomsg 'SQL:'.a:wordBlock
+    echohl None
 endfunction "}}}
 
 if exists('s:save_cpo')

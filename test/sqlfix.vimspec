@@ -8,43 +8,42 @@ Describe vim-sqlfix
   Before all
   End
 
-  Describe sqlfix#Fix()
-    Context Simple
-      "{{{
-      Before each
-        %delete _
-        append
+  Context Simple
+    "{{{
+    Before each
+      %delete _
+      append
 SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FROM   (SELECT *
     FROM member AS sub_mem) AS mem;
 .
-      End
-
-      It is OK case.
-        normal! ggVGy
-        Assert Equals(sqlfix#Fix(), [
-          \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-          \ 'FROM (',
-          \ '    SELECT *',
-          \ '    FROM member AS sub_mem) AS mem;'])
-      End
-      It is g:sqlfix#IndentSize = 2 case.
-        let g:sqlfix#IndentSize = 2
-        normal! ggVGy
-        Assert Equals(sqlfix#Fix(), [
-          \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-          \ 'FROM (',
-          \ '  SELECT *',
-          \ '  FROM member AS sub_mem) AS mem;'])
-        let g:sqlfix#IndentSize = 4
-      End
-      "}}}
     End
 
-    Context SQL puzzle
-      "{{{
-      Before each
-        %delete _
-        append
+    It is OK case.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+        \ 'FROM (',
+        \ '    SELECT *',
+        \ '    FROM member AS sub_mem) AS mem;'])
+    End
+    It is g:sqlfix#IndentSize = 2 case.
+      let g:sqlfix#IndentSize = 2
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+        \ 'FROM (',
+        \ '  SELECT *',
+        \ '  FROM member AS sub_mem) AS mem;'])
+      let g:sqlfix#IndentSize = 4
+    End
+    "}}}
+  End
+
+  Context SQL puzzle
+    "{{{
+    Before each
+      %delete _
+      append
 (
   SELECT 'azusa' AS type, mem.id AS member_id, IFNULL(mem.tel, '') AS tel,
     CASE
@@ -64,68 +63,67 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
 )
 ORDER BY type ASC, id ASC;
 .
-      End
-
-      It is chihaya is cute.
-        normal! ggVGy
-        Assert Equals(sqlfix#Fix(), [
-        \ ' (',
-        \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel,",
-        \ '    CASE',
-        \ '    WHEN mem.address IS NOT NULL THEN mem.address',
-        \ '    WHEN mem.tel IS NOT NULL THEN mem.tel',
-        \ '    ELSE mem.mailaddress',
-        \ '    END AS mailaddress',
-        \ '    FROM member mem)',
-        \ 'UNION ALL (',
-        \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM( mem.attribute IN (",
-        \ "         'hoge', 'huga') AND mem.status = 1) < SUM( mem.attribute IN (",
-        \ "         'hoge', 'huga') AND mem.status = 0), 0, 1) AS full_status, NULL",
-        \ '    FROM leave_member lev',
-        \ '    INNER JOIN member mem',
-        \ '    ON (',
-        \ '         lev.member_id = mem.id',
-        \ "        AND mem.leave_date <= '2072-07-02 00:07:02')",
-        \ '    WHERE (',
-        \ '         (',
-        \ "             lev.year = '2014'",
-        \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
-        \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59'))",
-        \ '        OR (',
-        \ "             lev.year = '2015'",
-        \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
-        \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59')))",
-        \ '    GROUP BY lev.id)',
-        \ 'ORDER BY type ASC, id ASC;'])
-      End
-      "}}}
     End
 
-    Context Yii
-      "{{{
-      Before each
-        %delete _
-        append
+    It is chihaya is cute.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+      \ ' (',
+      \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel,",
+      \ '    CASE',
+      \ '    WHEN mem.address IS NOT NULL THEN mem.address',
+      \ '    WHEN mem.tel IS NOT NULL THEN mem.tel',
+      \ '    ELSE mem.mailaddress',
+      \ '    END AS mailaddress',
+      \ '    FROM member mem)',
+      \ 'UNION ALL (',
+      \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM( mem.attribute IN (",
+      \ "         'hoge', 'huga') AND mem.status = 1) < SUM( mem.attribute IN (",
+      \ "         'hoge', 'huga') AND mem.status = 0), 0, 1) AS full_status, NULL",
+      \ '    FROM leave_member lev',
+      \ '    INNER JOIN member mem',
+      \ '    ON (',
+      \ '         lev.member_id = mem.id',
+      \ "        AND mem.leave_date <= '2072-07-02 00:07:02')",
+      \ '    WHERE (',
+      \ '         (',
+      \ "             lev.year = '2014'",
+      \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
+      \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59'))",
+      \ '        OR (',
+      \ "             lev.year = '2015'",
+      \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
+      \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59')))",
+      \ '    GROUP BY lev.id)',
+      \ 'ORDER BY type ASC, id ASC;'])
+    End
+    "}}}
+  End
+
+  Context Yii
+    "{{{
+    Before each
+      %delete _
+      append
 SELECT mem.id AS member_id
  FROM member AS mem
  WHERE mem.started_at <= :started_at AND :ended_at < mem.ended_at
  AND mem.status = :active. Bound with started_at='2072-07-02 00:07:02', ended_at='2091-09-01 00:09:01', :active=1
 .
-      End
-
-      It is OK case.
-        normal! ggVGy
-        Assert Equals(sqlfix#Fix(), [
-          \ 'SELECT mem.id AS member_id',
-          \ 'FROM member AS mem',
-          \ "WHERE mem.started_at <= '2072-07-02 00:07:02'",
-          \ "AND '2091-09-01 00:09:01' < mem.ended_at",
-          \ 'AND mem.status = 1;'])
-      End
-      "}}}
     End
 
+    It is OK case.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT mem.id AS member_id',
+        \ 'FROM member AS mem',
+        \ "WHERE mem.started_at <= '2072-07-02 00:07:02'",
+        \ "AND '2091-09-01 00:09:01' < mem.ended_at",
+        \ 'AND mem.status = 1;'])
+    End
+    "}}}
   End
+
 End
 
 " vim:fdl=0:sts=2:sw=2:ts=2
