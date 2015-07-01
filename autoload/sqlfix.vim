@@ -1,7 +1,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-"TODO: Rails log message support? I don't know Rails. So I try Rails.
 "TODO: Keyword completion
 "TODO: Support 1 liner so long
 

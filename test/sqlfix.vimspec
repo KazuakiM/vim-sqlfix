@@ -124,6 +124,25 @@ SELECT mem.id AS member_id
     "}}}
   End
 
+  Context Ruby on Rails
+    "{{{
+    Before each
+      %delete _
+      append
+select * from users where id = 1 and email = 'test@sample.com'
+.
+    End
+
+    It is OK case.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT *',
+        \ 'FROM users',
+        \ 'WHERE id = 1',
+        \ "AND email = 'test@sample.com';"])
+    End
+    "}}}
+  End
 End
 
 " vim:fdl=0:sts=2:sw=2:ts=2
