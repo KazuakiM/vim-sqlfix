@@ -26,15 +26,51 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
         \ '    SELECT *',
         \ '    FROM member AS sub_mem) AS mem;'])
     End
-    It is g:sqlfix#IndentSize = 2 case.
-      let g:sqlfix#IndentSize = 2
+
+    It is g:sqlfix#Config.indent = 2 case.
+      let g:sqlfix#Config = {'indent': 2}
       normal! ggVGy
       Assert Equals(sqlfix#Fix(), [
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '  SELECT *',
         \ '  FROM member AS sub_mem) AS mem;'])
-      let g:sqlfix#IndentSize = 4
+    End
+
+    It is g:sqlfix#Config.database = 'postgresql' case.
+      let g:sqlfix#Config = {'database': 'postgresql', 'indent': 4, 'explain': 1}
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'EXPLAIN ANALYZE',
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+        \ 'FROM (',
+        \ '    SELECT *',
+        \ '    FROM member AS sub_mem) AS mem;'])
+      let g:sqlfix#Config =  {'database': 'postgresql', 'explain': 0}
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+        \ 'FROM (',
+        \ '    SELECT *',
+        \ '    FROM member AS sub_mem) AS mem;'])
+    End
+
+    It is g:sqlfix#Config.database = 'mysql' case.
+      let g:sqlfix#Config = {'database': 'mysql', 'explain': 1}
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'EXPLAIN',
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+        \ 'FROM (',
+        \ '    SELECT *',
+        \ '    FROM member AS sub_mem) AS mem;'])
+      let g:sqlfix#Config =  {'database': 'mysql', 'explain': 0}
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+        \ 'FROM (',
+        \ '    SELECT *',
+        \ '    FROM member AS sub_mem) AS mem;'])
     End
     "}}}
   End
@@ -66,6 +102,7 @@ ORDER BY type ASC, id ASC;
     End
 
     It is chihaya is cute.
+      let g:sqlfix#Config = {}
       normal! ggVGy
       Assert Equals(sqlfix#Fix(), [
       \ ' (',

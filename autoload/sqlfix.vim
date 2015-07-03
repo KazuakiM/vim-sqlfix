@@ -1,26 +1,19 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-"TODO: Keyword completion
-"TODO: Support 1 liner so long
-
 "variable {{{
-let g:sqlfix#IndentSize = ! exists('g:sqlfix#IndentSize') ? 4 : g:sqlfix#IndentSize
-let s:SqlfixFrameWork   = ! exists('s:SqlfixFrameWork')   ? {
-    \ 'Yii': '. Bound with'} :
-    \ s:SqlfixFrameWork
-let s:SqlfixKeywordsNewLine = ! exists('s:SqlfixKeywordsNewLine') ?  [
+let s:sqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'explain': 0}
+let s:SqlfixFrameWork       = {'Yii':      '. Bound with'}
+let s:SqlfixKeywordsNewLine = [
     \ 'alter',  'and',    'begin', 'case',   'commit', 'create', 'delete',   'drop',   'else',     'elseif',
     \ 'end',    'from',   'grant', 'group',  'having', 'inner',  'insert',   'left',   'limit',    'lock',
     \ 'on',     'or',     'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'union',
-    \ 'unlock', 'update', 'when',  'where'] :
-    \ s:SqlfixKeywordsNewLine
-let s:SqlfixKeywordsContinue = ! exists('s:SqlfixKeywordsContinue') ? [
+    \ 'unlock', 'update', 'when',  'where']
+let s:SqlfixKeywordsContinue = [
     \ 'add',               'after',   'all',      'as',    'asc',    'between', 'by',   'column', 'current_date', 'current_time',
     \ 'current_timestamp', 'desc',    'distinct', 'in',    'index',  'is',      'join', 'key',    'like',         'not',
-    \ 'null',              'primary', 'sysdate',  'table', 'tables', 'then',    'unique'] :
-    \ s:SqlfixKeywordsContinue
-let s:SqlfixKeywordsFunction = ! exists('s:SqlfixKeywordsFunction') ? [
+    \ 'null',              'primary', 'sysdate',  'table', 'tables', 'then',    'unique']
+let s:SqlfixKeywordsFunction = [
     \ 'abs(',       'acos(',    'ascll(',    'asin(',      'atan(',     'atan2(',        'avg(',          'ceiling(',    'char(',     'char_length(',
     \ 'concat(',    'cos(',     'cot(',      'count(',     'date_add(', 'date_format(',  'date_sub(',     'dayofmonth(', 'dayname(',  'dayofweek(',
     \ 'dayofyear(', 'degrees(', 'exp(',      'floor(',     'greatest(', 'group_concat(', 'hour(',         'if(',         'ifnull(',   'initcap(',
@@ -28,28 +21,29 @@ let s:SqlfixKeywordsFunction = ! exists('s:SqlfixKeywordsFunction') ? [
     \ 'minute(',    'mod(',     'month(',    'monthname(', 'now(',      'nullif(',       'octet_length(', 'pi(',         'position(', 'pow(',
     \ 'radians(',   'rand(',    'repeat(',   'replace(',   'reverse(',  'right(',        'round(',        'rtrim(',      'second(',   'sign(',
     \ 'sin(',       'sqrt(',    'stddev(',   'substring(', 'sum(',      'tan(',          'time_format(',  'trim(',       'upper(',    'week(',
-    \ 'year('] :
-    \ s:SqlfixKeywordsFunction
-let s:V      = vital#of('sqlfix')
-let s:String = s:V.import('Data.String')
-let s:Buffer = s:V.import('Vim.Buffer')
+    \ 'year(']
+let s:V = vital#of('sqlfix').load('Data.String', 'Vim.Buffer')
 "}}}
+
 function! sqlfix#Normal() abort "{{{
     call sqlfix#Fix()
     call append(line('.'), s:SqlfixReturn)
 endfunction "}}}
+
 function! sqlfix#Visual() range abort "{{{
     call sqlfix#Fix()
     call append(a:lastline, s:SqlfixReturn)
 endfunction "}}}
+
 function! sqlfix#Fix() abort "{{{
     " Init
+    let s:sqlfixConfig       = extend(s:sqlfixDefaultConfig, exists('g:sqlfix#Config') ? g:sqlfix#Config : {})
     let s:SqlfixReturn       = []
     let s:SqlfixCloseBracket = 0
     let s:SqlfixStatus       = []
 
     " Get last selected
-    let l:sqlBody = substitute(s:Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
+    let l:sqlBody = substitute(s:V.Vim.Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
 
     " Supported FrameWork
     for l:key in keys(s:SqlfixFrameWork)
@@ -73,10 +67,19 @@ function! sqlfix#Fix() abort "{{{
     let l:oldLineLow = ''
     while l:oldLineLow !=# l:sqlBody
         let l:oldLineLow = l:sqlBody
-        let l:sqlBody    = s:String.trim(substitute(substitute(substitute(substitute(
+        let l:sqlBody    = s:V.Data.String.trim(substitute(substitute(substitute(substitute(
             \ l:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g'))
     endwhile
     "PP '['.l:sqlBody.']'
+
+    " Add Explain
+    if s:sqlfixDefaultConfig.explain is 1
+        if s:sqlfixDefaultConfig.database is 'postgresql'
+            call s:SqlfixAddReturn('EXPLAIN ANALYZE')
+        else
+            call s:SqlfixAddReturn('EXPLAIN')
+        endif
+    endif
 
     " Add EndWords
     let l:sqlBodyLen = strlen(l:sqlBody)
@@ -122,10 +125,11 @@ function! sqlfix#Fix() abort "{{{
 
     return s:SqlfixReturn
 endfunction "}}}
+
 function! s:SqlfixAddReturn(wordBlock) abort "{{{
     if strlen(a:wordBlock) > 0
         let l:indentString = ''
-        let l:indentMax    = count(s:SqlfixStatus, 'bracket') * g:sqlfix#IndentSize
+        let l:indentMax    = count(s:SqlfixStatus, 'bracket') * s:sqlfixConfig.indent
         if l:indentMax > 0
             for l:indentIndex in range(l:indentMax)
                 let l:indentString = l:indentString.' '
@@ -144,6 +148,7 @@ function! s:SqlfixAddReturn(wordBlock) abort "{{{
         "echo '<'.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:indentString.a:wordBlock.'>'
     endif
 endfunction "}}}
+
 function! s:SqlfixWarning(wordBlock) "{{{
     echohl ErrorMsg
         echomsg '[WARNING]Would you check a close bracket?'

@@ -4,50 +4,60 @@ Author:  KazuakiM <twitter@NanohaAsOnKai>
 License: MIT License.
 
 ==============================================================================
-CONTENTS						*sqlfix-contents*
+CONTENTS					*sqlfix-contents*
 
 INTRODUCTION			|sqlfix-introduction|
 INTERFACE			|sqlfix-interface|
-  VARIABLES			  |sqlfix-variables|
+  OPTIONS			  |sqlfix-options|
   COMMANDS			  |sqlfix-commands|
   FUNCTIONS			  |sqlfix-functions|
 USAGE				|sqlfix-usage|
 
 ==============================================================================
-INTRODUCTION						*sqlfix-introduction*
+INTRODUCTION					*sqlfix-introduction*
 
 This Vim plugin is SQL pretty print.
 vim-sqlfix's goal is support FrameWork application log format.
 
 ==============================================================================
-INTERFACE						*sqlfix-interface*
+INTERFACE					*sqlfix-interface*
 
 ------------------------------------------------------------------------------
-VARIABLES						*sqlfix-variables*
+OPTIONS						*sqlfix-options*
 
-g:sqlfix#IndentSize = {value}				*g:sqlfix#IndentSize*
-	This variable is indent size setting(Default 4).
+g:sqlfix#Config = {list}			*g:sqlfix#Config*
+	This variable is plugin config variable.
+
+database					*sqlfix-options-database*
+		Set useing database.
+
+indent						*sqlfix-options-indent*
+		Would you like indent space.
+
+explain						*sqlfix-options-explain*
+		IF you want to set a 'EXPLAIN( ANALYZE)', you should set 1
+		else 0.
 
 ------------------------------------------------------------------------------
-COMMANDS						*sqlfix-commands*
+COMMANDS					*sqlfix-commands*
 
-:Sqlfix							*:Sqlfix*
+:Sqlfix						*:Sqlfix*
 	Execute |sqlfix#Normal()|.
 
-:'<,'>Sqlfix						*:'<,'>Sqlfix*
+:'<,'>Sqlfix					*:'<,'>Sqlfix*
 	Execute |sqlfix#Visual()|.
 
 ------------------------------------------------------------------------------
-FUNCTIONS						*sqlfix-functions*
+FUNCTIONS					*sqlfix-functions*
 
-sqlfix#Normal()						*sqlfix#Normal()*
+sqlfix#Normal()					*sqlfix#Normal()*
 	The last selected text in visual mode is formatted at SQL.
 
-sqlfix#Visual()						*sqlfix#Visual()*
+sqlfix#Visual()					*sqlfix#Visual()*
 	Now selected text in visual mode is formatted at SQL.
 
 ==============================================================================
-USAGE							*sqlfix-usage*
+USAGE						*sqlfix-usage*
 
 >
 	NeoBundle 'KazuakiM/vim-sqlfix'
