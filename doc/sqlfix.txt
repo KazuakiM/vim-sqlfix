@@ -11,7 +11,6 @@ INTERFACE			|sqlfix-interface|
   OPTIONS			  |sqlfix-options|
   COMMANDS			  |sqlfix-commands|
   FUNCTIONS			  |sqlfix-functions|
-USAGE				|sqlfix-usage|
 
 ==============================================================================
 INTRODUCTION					*sqlfix-introduction*
@@ -27,16 +26,27 @@ OPTIONS						*sqlfix-options*
 
 g:sqlfix#Config = {list}			*g:sqlfix#Config*
 	This variable is plugin config variable.
-
+>
+	let g:sqlfix#Config = {
+		\ 'database': 'postgresql',
+		\ 'indent': 2,
+		\ 'width': -1
+		\ 'explain': 1}
+<
 database					*sqlfix-options-database*
-		Set useing database.
+		Set useing database, 'mysql' or 'postgresql'.
+		Default value is 'mysql'.
 
 indent						*sqlfix-options-indent*
-		Would you like indent space.
+		Set indent spaces. Default value is '4'.
+
+width						*sqlfix-options-width*
+		Set line length. This function is invalidated by '-1'.
+		Default value is '180'.
 
 explain						*sqlfix-options-explain*
-		IF you want to set a 'EXPLAIN( ANALYZE)', you should set 1
-		else 0.
+		If you want to set a 'EXPLAIN( ANALYZE)', you set '1'.
+		Default value is '0'.
 
 ------------------------------------------------------------------------------
 COMMANDS					*sqlfix-commands*
@@ -55,13 +65,6 @@ sqlfix#Normal()					*sqlfix#Normal()*
 
 sqlfix#Visual()					*sqlfix#Visual()*
 	Now selected text in visual mode is formatted at SQL.
-
-==============================================================================
-USAGE						*sqlfix-usage*
-
->
-	NeoBundle 'KazuakiM/vim-sqlfix'
-<
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl

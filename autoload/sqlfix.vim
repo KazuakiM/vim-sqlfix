@@ -2,7 +2,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 "variable {{{
-let s:sqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'explain': 0}
+let s:sqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0}
 let s:SqlfixFrameWork       = {'Yii':      '. Bound with'}
 let s:SqlfixKeywordsNewLine = [
     \ 'alter',  'and',    'begin', 'case',   'commit', 'create', 'delete',   'drop',   'else',     'elseif',
@@ -37,10 +37,10 @@ endfunction "}}}
 
 function! sqlfix#Fix() abort "{{{
     " Init
-    let s:sqlfixConfig       = extend(s:sqlfixDefaultConfig, exists('g:sqlfix#Config') ? g:sqlfix#Config : {})
     let s:SqlfixReturn       = []
     let s:SqlfixCloseBracket = 0
     let s:SqlfixStatus       = []
+    let l:config             = extend(s:sqlfixDefaultConfig, exists('g:sqlfix#Config') ? g:sqlfix#Config : {})
 
     " Get last selected
     let l:sqlBody = substitute(s:V.Vim.Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
@@ -73,11 +73,11 @@ function! sqlfix#Fix() abort "{{{
     "PP '['.l:sqlBody.']'
 
     " Add Explain
-    if s:sqlfixDefaultConfig.explain is 1
-        if s:sqlfixDefaultConfig.database is 'postgresql'
-            call s:SqlfixAddReturn('EXPLAIN ANALYZE')
+    if l:config.explain is 1
+        if l:config.database is 'postgresql'
+            call s:SqlfixAddReturn('EXPLAIN ANALYZE', l:config.indent)
         else
-            call s:SqlfixAddReturn('EXPLAIN')
+            call s:SqlfixAddReturn('EXPLAIN',         l:config.indent)
         endif
     endif
 
@@ -94,29 +94,38 @@ function! sqlfix#Fix() abort "{{{
         if count(s:SqlfixKeywordsFunction, l:words, 1) >= 1
             let l:wordBlock = l:wordBlock.' '.toupper(l:words)
             call add(s:SqlfixStatus, 'function')
+
         elseif stridx(l:words, '(') is 0
-            call s:SqlfixAddReturn(l:wordBlock.' '.l:words)
+            call s:SqlfixAddReturn(l:wordBlock.' '.l:words, l:config.indent)
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = ''
+
         elseif stridx(l:words, ')') > -1
             let l:wordBlock           = l:wordBlock.l:words
             let s:SqlfixCloseBracket -= 1
+
         elseif count(s:SqlfixKeywordsContinue, l:words, 1) >= 1
             let l:wordBlock = l:wordBlock.' '.toupper(l:words)
+
         elseif count(s:SqlfixKeywordsNewLine, l:words, 1) >= 1
             if count(s:SqlfixStatus, 'function') + s:SqlfixCloseBracket > 0
                 let l:wordBlock = l:wordBlock.' '.toupper(l:words)
             else
-                call s:SqlfixAddReturn(l:wordBlock)
+                call s:SqlfixAddReturn(l:wordBlock, l:config.indent)
                 let l:wordBlock = toupper(l:words)
             endif
+
+        elseif l:config.width isnot -1 && l:config.width < len(l:wordBlock.' '.l:words)
+            call s:SqlfixAddReturn(l:wordBlock.' '.l:words, l:config.indent)
+            let l:wordBlock = ''
+
         else
             let l:wordBlock = l:wordBlock.' '.l:words
         endif
         "echo '['.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:words.': '.l:wordBlock.']'
     endfor
     " Rest wordBlock
-    call s:SqlfixAddReturn(l:wordBlock)
+    call s:SqlfixAddReturn(l:wordBlock, l:config.indent)
 
     " Check bracket.
     if s:SqlfixCloseBracket < 0 || len(s:SqlfixStatus) > 0
@@ -126,10 +135,10 @@ function! sqlfix#Fix() abort "{{{
     return s:SqlfixReturn
 endfunction "}}}
 
-function! s:SqlfixAddReturn(wordBlock) abort "{{{
+function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
     if strlen(a:wordBlock) > 0
         let l:indentString = ''
-        let l:indentMax    = count(s:SqlfixStatus, 'bracket') * s:sqlfixConfig.indent
+        let l:indentMax    = count(s:SqlfixStatus, 'bracket') * a:indent
         if l:indentMax > 0
             for l:indentIndex in range(l:indentMax)
                 let l:indentString = l:indentString.' '

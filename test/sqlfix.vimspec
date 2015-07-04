@@ -19,6 +19,7 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
     End
 
     It is OK case.
+      let g:sqlfix#Config = {}
       normal! ggVGy
       Assert Equals(sqlfix#Fix(), [
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
@@ -72,6 +73,29 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
         \ '    SELECT *',
         \ '    FROM member AS sub_mem) AS mem;'])
     End
+
+    It is g:sqlfix#Config.width = -1 case.
+      let g:sqlfix#Config = {'width': -1}
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
+        \ 'FROM (',
+        \ '    SELECT *',
+        \ '    FROM member AS sub_mem) AS mem;'])
+    End
+
+    It is g:sqlfix#Config.width = 20 case.
+      let g:sqlfix#Config = {'width': 20}
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(), [
+        \ 'SELECT mem.id AS member_id,',
+        \ ' mem.name AS member_name,',
+        \ ' mem.status, mem.address',
+        \ 'FROM (',
+        \ '    SELECT *',
+        \ '    FROM member AS sub_mem',
+        \ '    ) AS mem;'])
+    End
     "}}}
   End
 
@@ -102,7 +126,7 @@ ORDER BY type ASC, id ASC;
     End
 
     It is chihaya is cute.
-      let g:sqlfix#Config = {}
+      let g:sqlfix#Config = {'width': 180}
       normal! ggVGy
       Assert Equals(sqlfix#Fix(), [
       \ ' (',
@@ -150,6 +174,7 @@ SELECT mem.id AS member_id
     End
 
     It is OK case.
+      let g:sqlfix#Config = {}
       normal! ggVGy
       Assert Equals(sqlfix#Fix(), [
         \ 'SELECT mem.id AS member_id',
@@ -171,6 +196,7 @@ select * from users where id = 1 and email = 'test@sample.com'
     End
 
     It is OK case.
+      let g:sqlfix#Config = {}
       normal! ggVGy
       Assert Equals(sqlfix#Fix(), [
         \ 'SELECT *',

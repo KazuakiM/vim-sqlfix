@@ -9,15 +9,6 @@ vim-sqlfix's goal is support FrameWork application log format.
 * [Yii](http://www.yiiframework.com/)
 * [Ruby on Rails](http://rubyonrails.org/)
 
-##Installation
-###Sample setting.
-
-Sample setting is using [NeoBundle](https://github.com/Shougo/neobundle.vim).  
-
-```vim
-NeoBundle 'KazuakiM/vim-sqlfix'
-```
-
 ##Usage
 ### Normal mode
 
