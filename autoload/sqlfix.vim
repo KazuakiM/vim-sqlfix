@@ -40,7 +40,7 @@ function! sqlfix#Fix() abort "{{{
     let s:SqlfixReturn       = []
     let s:SqlfixCloseBracket = 0
     let s:SqlfixStatus       = []
-    let l:config             = extend(s:sqlfixDefaultConfig, exists('g:sqlfix#Config') ? g:sqlfix#Config : {})
+    let l:config             = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:sqlfixDefaultConfig, 'keep')
 
     " Get last selected
     let l:sqlBody = substitute(s:V.Vim.Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
