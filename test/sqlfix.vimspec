@@ -172,7 +172,8 @@ ORDER BY type ASC, id ASC;
 SELECT mem.id AS member_id
  FROM member AS mem
  WHERE mem.started_at <= :started_at AND :ended_at < mem.ended_at
- AND mem.status = :active. Bound with started_at='2072-07-02 00:07:02', ended_at='2091-09-01 00:09:01', :active=1
+ AND mem.id IN ( :member_id1, :member_id2, :member_id3, :member_id4, :member_id5, :member_id6, :member_id7, :member_id8, :member_id9, :member_id10, :member_id11)
+ AND mem.status = :active. Bound with started_at='2072-07-02 00:07:02', ended_at='2091-09-01 00:09:01', :member_id1=1, :member_id2=2, :member_id3=3, :member_id4=4, :member_id5=5, :member_id6=6, :member_id7=7, :member_id8=8, :member_id9=9, :member_id10=10, :member_id11=11, :active=1
 .
     End
 
@@ -183,6 +184,8 @@ SELECT mem.id AS member_id
         \ 'FROM member AS mem',
         \ "WHERE mem.started_at <= '2072-07-02 00:07:02'",
         \ "AND '2091-09-01 00:09:01' < mem.ended_at",
+        \ 'AND mem.id IN (',
+        \ '     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)',
         \ 'AND mem.status = 1;'])
     End
     "}}}
