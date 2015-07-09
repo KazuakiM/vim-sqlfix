@@ -22,7 +22,7 @@ let s:SqlfixKeywordsFunction = [
     \ 'radians(',   'rand(',    'repeat(',   'replace(',   'reverse(',  'right(',        'round(',        'rtrim(',      'second(',   'sign(',
     \ 'sin(',       'sqrt(',    'stddev(',   'substring(', 'sum(',      'tan(',          'time_format(',  'trim(',       'upper(',    'week(',
     \ 'year(']
-let s:V = vital#of('sqlfix').load('Data.String', 'Vim.Buffer')
+let s:V = vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer')
 "}}}
 
 function! sqlfix#Normal() abort "{{{
@@ -49,7 +49,7 @@ function! sqlfix#Fix() abort "{{{
     for l:key in keys(s:SqlfixFrameWork)
         let l:frameWorkIdx = stridx(l:sqlBody, s:SqlfixFrameWork[l:key])
         if l:frameWorkIdx > -1 && l:key is 'Yii'
-            let l:frameWorkBinds = split(l:sqlBody[l:frameWorkIdx+13:],',\s\+')
+            let l:frameWorkBinds = reverse(s:V.Data.List.sort_by(split(l:sqlBody[l:frameWorkIdx+13:],',\s\+'), 'strlen(v:val)'))
             let l:sqlBody        = l:sqlBody[:l:frameWorkIdx-1]
             for l:frameWorkBind in l:frameWorkBinds
                 let l:frameWorkParam = split(l:frameWorkBind, '=')
