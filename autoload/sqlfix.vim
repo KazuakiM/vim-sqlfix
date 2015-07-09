@@ -92,11 +92,11 @@ function! sqlfix#Fix() abort "{{{
     let l:wordBlock = ''
     for l:words in split(l:sqlBody, ' ')
         if count(s:SqlfixKeywordsFunction, l:words, 1) >= 1
-            let l:wordBlock = l:wordBlock.' '.toupper(l:words)
+            let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
             call add(s:SqlfixStatus, 'function')
 
         elseif stridx(l:words, '(') is 0
-            call s:SqlfixAddReturn(l:wordBlock.' '.l:words, l:config.indent)
+            call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), l:config.indent)
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = ''
 
@@ -105,22 +105,22 @@ function! sqlfix#Fix() abort "{{{
             let s:SqlfixCloseBracket -= 1
 
         elseif count(s:SqlfixKeywordsContinue, l:words, 1) >= 1
-            let l:wordBlock = l:wordBlock.' '.toupper(l:words)
+            let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
 
         elseif count(s:SqlfixKeywordsNewLine, l:words, 1) >= 1
             if count(s:SqlfixStatus, 'function') + s:SqlfixCloseBracket > 0
-                let l:wordBlock = l:wordBlock.' '.toupper(l:words)
+                let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
             else
                 call s:SqlfixAddReturn(l:wordBlock, l:config.indent)
                 let l:wordBlock = toupper(l:words)
             endif
 
         elseif l:config.width isnot -1 && l:config.width < len(l:wordBlock.' '.l:words)
-            call s:SqlfixAddReturn(l:wordBlock.' '.l:words, l:config.indent)
+            call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), l:config.indent)
             let l:wordBlock = ''
 
         else
-            let l:wordBlock = l:wordBlock.' '.l:words
+            let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0)
         endif
         "echo '['.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:words.': '.l:wordBlock.']'
     endfor
@@ -133,6 +133,19 @@ function! sqlfix#Fix() abort "{{{
     endif
 
     return s:SqlfixReturn
+endfunction "}}}
+
+function! s:SqlfixCheckWordBlockSpaceExist(wordBlock, words, toupper) abort "{{{
+    if len(a:wordBlock) is 0
+        if a:toupper
+            return toupper(a:words)
+        else
+            return a:words
+        endif
+    elseif a:toupper
+        return a:wordBlock.' '.toupper(a:words)
+    endif
+    return a:wordBlock.' '.a:words
 endfunction "}}}
 
 function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
