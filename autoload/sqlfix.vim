@@ -2,7 +2,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 "variable {{{
-let s:sqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0}
+let s:sqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'direcotry_path': ''}
 let s:SqlfixFrameWork       = {'Yii':      '. Bound with'}
 let s:SqlfixKeywordsNewLine = [
     \ 'alter',  'and',    'begin', 'case',   'commit', 'create', 'delete',   'drop',   'else',     'elseif',
@@ -26,21 +26,24 @@ let s:V = vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer')
 "}}}
 
 function! sqlfix#Normal() abort "{{{
-    call sqlfix#Fix()
-    call append(line('.'), s:SqlfixReturn)
+    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:sqlfixDefaultConfig, 'keep')
+
+    call sqlfix#Fix(l:config)
+    call s:SqlfixOutput(l:config, line('.'))
 endfunction "}}}
 
 function! sqlfix#Visual() range abort "{{{
-    call sqlfix#Fix()
-    call append(a:lastline, s:SqlfixReturn)
+    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:sqlfixDefaultConfig, 'keep')
+
+    call sqlfix#Fix(l:config)
+    call s:SqlfixOutput(l:config, a:lastline)
 endfunction "}}}
 
-function! sqlfix#Fix() abort "{{{
+function! sqlfix#Fix(config) abort "{{{
     " Init
     let s:SqlfixReturn       = []
     let s:SqlfixCloseBracket = 0
     let s:SqlfixStatus       = []
-    let l:config             = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:sqlfixDefaultConfig, 'keep')
 
     " Get last selected
     let l:sqlBody = substitute(s:V.Vim.Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
@@ -73,11 +76,11 @@ function! sqlfix#Fix() abort "{{{
     "PP '['.l:sqlBody.']'
 
     " Add Explain
-    if l:config.explain is 1
-        if l:config.database is 'postgresql'
-            call s:SqlfixAddReturn('EXPLAIN ANALYZE', l:config.indent)
+    if a:config.explain is 1
+        if a:config.database is 'postgresql'
+            call s:SqlfixAddReturn('EXPLAIN ANALYZE', a:config.indent)
         else
-            call s:SqlfixAddReturn('EXPLAIN',         l:config.indent)
+            call s:SqlfixAddReturn('EXPLAIN',         a:config.indent)
         endif
     endif
 
@@ -96,7 +99,7 @@ function! sqlfix#Fix() abort "{{{
             call add(s:SqlfixStatus, 'function')
 
         elseif stridx(l:words, '(') is 0
-            call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), l:config.indent)
+            call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), a:config.indent)
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = ''
 
@@ -111,12 +114,12 @@ function! sqlfix#Fix() abort "{{{
             if count(s:SqlfixStatus, 'function') + s:SqlfixCloseBracket > 0
                 let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
             else
-                call s:SqlfixAddReturn(l:wordBlock, l:config.indent)
+                call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
                 let l:wordBlock = toupper(l:words)
             endif
 
-        elseif l:config.width isnot -1 && l:config.width < len(l:wordBlock.' '.l:words)
-            call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), l:config.indent)
+        elseif a:config.width isnot -1 && a:config.width < len(l:wordBlock.' '.l:words)
+            call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), a:config.indent)
             let l:wordBlock = ''
 
         else
@@ -125,7 +128,7 @@ function! sqlfix#Fix() abort "{{{
         "echo '['.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:words.': '.l:wordBlock.']'
     endfor
     " Rest wordBlock
-    call s:SqlfixAddReturn(l:wordBlock, l:config.indent)
+    call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
 
     " Check bracket.
     if s:SqlfixCloseBracket < 0 || len(s:SqlfixStatus) > 0
@@ -171,7 +174,17 @@ function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
     endif
 endfunction "}}}
 
-function! s:SqlfixWarning(wordBlock) "{{{
+function! s:SqlfixOutput(config, position) abort "{{{
+    " Output buffer file
+    call append(a:position, s:SqlfixReturn)
+
+    " Output file
+    if isdirectory(a:config.direcotry_path)
+        call writefile(s:SqlfixReturn, a:config.direcotry_path.'/sqlfix.sql')
+    endif
+endfunction "}}}
+
+function! s:SqlfixWarning(wordBlock) abort "{{{
     echohl ErrorMsg
         echomsg '[WARNING]Would you check a close bracket?'
         echomsg 'REST:'.join(s:SqlfixStatus).', COUNT:'.s:SqlfixCloseBracket
