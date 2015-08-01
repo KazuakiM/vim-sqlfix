@@ -30,8 +30,9 @@ g:sqlfix#Config = {list}			*g:sqlfix#Config*
 	let g:sqlfix#Config = {
 		\ 'database': 'postgresql',
 		\ 'indent': 2,
-		\ 'width': -1
-		\ 'explain': 1}
+		\ 'width': -1,
+		\ 'explain': 1,
+		\ 'direcotry_path': ''}
 <
 database					*sqlfix-options-database*
 		Set useing database, 'mysql' or 'postgresql'.
@@ -46,7 +47,11 @@ width						*sqlfix-options-width*
 
 explain						*sqlfix-options-explain*
 		If you want to set a 'EXPLAIN( ANALYZE)', you set '1'.
-		Default value is '0'.
+		Default value is '0'(disable).
+
+direcotry_path					*sqlfix-options-direcotry_path*
+		If you want SQL file or |SqlffixRun|, you set directory
+		path. Default value is ''(disable).
 
 ------------------------------------------------------------------------------
 COMMANDS					*sqlfix-commands*
@@ -57,6 +62,9 @@ COMMANDS					*sqlfix-commands*
 :'<,'>Sqlfix					*:'<,'>Sqlfix*
 	Execute |sqlfix#Visual()|.
 
+:SqlfixRun					*:SqlfixRun*
+	Execute |sqlfix#Run()|.
+
 ------------------------------------------------------------------------------
 FUNCTIONS					*sqlfix-functions*
 
@@ -65,6 +73,19 @@ sqlfix#Normal()					*sqlfix#Normal()*
 
 sqlfix#Visual()					*sqlfix#Visual()*
 	Now selected text in visual mode is formatted at SQL.
+
+sqlfix#Run()					*sqlfix#Run()*
+	This function is depend on |quickrun| and
+	|sqlfix-options-direcotry_path|.
+MySQL sample
+>
+	let g:quickrun_config = {
+		\ 'sql': {'type': 'sql/mysql'},
+		\ 'sql/mysql': {
+		\     'cmdopt':
+		\         '--user=root --password= --host=localhost '.
+		\         '--port=3306 --database=sample --connect-timeout=5'}
+<
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl

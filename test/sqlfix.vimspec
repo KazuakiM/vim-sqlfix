@@ -6,6 +6,7 @@ call themis#helper('command').with(themis#helper('assert')).with({'Expect': them
 
 Describe vim-sqlfix
   Before all
+    let l:sqlfixDefaultConfig  = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'direcotry_path': ''}
   End
 
   Context Simple
@@ -20,7 +21,7 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '    SELECT *',
@@ -28,69 +29,58 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
     End
 
     It is g:sqlfix#Config.indent = 2 case.
-      let g:sqlfix#Config = {'indent': 2}
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({'indent': 2}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '  SELECT *',
         \ '  FROM member AS sub_mem) AS mem;'])
-      unlet g:sqlfix#Config
     End
 
     It is g:sqlfix#Config.database = 'postgresql' case.
-      let g:sqlfix#Config = {'database': 'postgresql', 'explain': 1}
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({'database': 'postgresql', 'explain': 1}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'EXPLAIN ANALYZE',
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '    SELECT *',
         \ '    FROM member AS sub_mem) AS mem;'])
-      let g:sqlfix#Config =  {'database': 'postgresql', 'explain': 0}
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({'database': 'postgresql', 'explain': 0}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '    SELECT *',
         \ '    FROM member AS sub_mem) AS mem;'])
-      unlet g:sqlfix#Config
     End
 
     It is g:sqlfix#Config.database = 'mysql' case.
-      let g:sqlfix#Config = {'database': 'mysql', 'explain': 1}
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({'database': 'mysql', 'explain': 1}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'EXPLAIN',
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '    SELECT *',
         \ '    FROM member AS sub_mem) AS mem;'])
-      let g:sqlfix#Config =  {'database': 'mysql', 'explain': 0}
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({'database': 'mysql', 'explain': 0}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '    SELECT *',
         \ '    FROM member AS sub_mem) AS mem;'])
-      unlet g:sqlfix#Config
     End
 
     It is g:sqlfix#Config.width = -1 case.
-      let g:sqlfix#Config = {'width': -1}
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({'width': -1}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
         \ 'FROM (',
         \ '    SELECT *',
         \ '    FROM member AS sub_mem) AS mem;'])
-      unlet g:sqlfix#Config
     End
 
     It is g:sqlfix#Config.width = 20 case.
-      let g:sqlfix#Config = {'width': 20}
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({'width': 20}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT mem.id AS member_id,',
         \ 'mem.name AS member_name,',
         \ 'mem.status, mem.address',
@@ -98,7 +88,6 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
         \ '    SELECT *',
         \ '    FROM member AS sub_mem',
         \ '    ) AS mem;'])
-      unlet g:sqlfix#Config
     End
     "}}}
   End
@@ -131,7 +120,7 @@ ORDER BY type ASC, id ASC;
 
     It is chihaya is cute.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
       \ '(',
       \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel,",
       \ '    CASE',
@@ -179,7 +168,7 @@ SELECT mem.id AS member_id
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT mem.id AS member_id',
         \ 'FROM member AS mem',
         \ "WHERE mem.started_at <= '2072-07-02 00:07:02'",
@@ -202,7 +191,7 @@ select * from users where id = 1 and email = 'test@sample.com'
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(), [
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
         \ 'SELECT *',
         \ 'FROM users',
         \ 'WHERE id = 1',

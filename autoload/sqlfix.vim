@@ -2,7 +2,10 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 "variable {{{
-let s:sqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'direcotry_path': ''}
+let s:SqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'direcotry_path': ''}
+let s:SqlfixQuickrunConfig  = {
+    \ 'mysql': {     'type': 'sql/mysql',    'command': 'mysql', 'exec': '%c %o < '},
+    \ 'postgresql': {'type': 'sql/postgres', 'command': 'psql',  'exec': '%c %o -f '}}
 let s:SqlfixFrameWork       = {'Yii':      '. Bound with'}
 let s:SqlfixKeywordsNewLine = [
     \ 'alter',  'and',    'begin', 'case',   'commit', 'create', 'delete',   'drop',   'else',     'elseif',
@@ -26,14 +29,14 @@ let s:V = vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer')
 "}}}
 
 function! sqlfix#Normal() abort "{{{
-    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:sqlfixDefaultConfig, 'keep')
+    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:SqlfixDefaultConfig, 'keep')
 
     call sqlfix#Fix(l:config)
     call s:SqlfixOutput(l:config, line('.'))
 endfunction "}}}
 
 function! sqlfix#Visual() range abort "{{{
-    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:sqlfixDefaultConfig, 'keep')
+    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:SqlfixDefaultConfig, 'keep')
 
     call sqlfix#Fix(l:config)
     call s:SqlfixOutput(l:config, a:lastline)
@@ -132,7 +135,7 @@ function! sqlfix#Fix(config) abort "{{{
 
     " Check bracket.
     if s:SqlfixCloseBracket < 0 || len(s:SqlfixStatus) > 0
-        call s:SqlfixWarning(l:wordBlock)
+        call s:SqlfixWarning(['[WARNING]Would you check a close bracket?', 'REST:'.join(s:SqlfixStatus).', COUNT:'.s:SqlfixCloseBracket, 'SQL:'.l:wordBlock])
     endif
 
     return s:SqlfixReturn
@@ -166,7 +169,7 @@ function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
             if len(s:SqlfixStatus) > 0
                 call remove(s:SqlfixStatus, -1)
             else
-                call s:SqlfixWarning(a:wordBlock)
+                call s:SqlfixWarning(['[WARNING]Would you check a close bracket?', 'REST:'.join(s:SqlfixStatus).', COUNT:'.s:SqlfixCloseBracket, 'SQL:'.a:wordBlock])
             endif
             let s:SqlfixCloseBracket += 1
         endwhile
@@ -184,11 +187,29 @@ function! s:SqlfixOutput(config, position) abort "{{{
     endif
 endfunction "}}}
 
-function! s:SqlfixWarning(wordBlock) abort "{{{
+function! sqlfix#Run() abort "{{{
+    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:SqlfixDefaultConfig, 'keep')
+
+    if filereadable(l:config.direcotry_path.'/sqlfix.sql') && exists('g:quickrun_config') is 1 &&
+        \ has_key(g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type], 'cmdopt')
+        let l:sql = join(readfile(l:config.direcotry_path.'/sqlfix.sql'))
+        echo "Please confirm SQL\nconfig\t:".g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type].cmdopt."\nSQL\t:".l:sql."\n"
+        let l:select = confirm('Are you sure?', "&Yes\n&No\n", 2)
+        if l:select is 1
+            let l:configQuickrunk      = extend(g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type], s:SqlfixQuickrunConfig[l:config.database], 'keep')
+            let l:configQuickrunk.exec = s:SqlfixQuickrunConfig[l:config.database].exec.l:config.direcotry_path.'/sqlfix.sql'
+            call quickrun#run(l:configQuickrunk)
+        endif
+    else
+        call s:SqlfixWarning(["[ERROR]Would you check g:quickrun_config['xxx/sql']['cmdopt'] or ".l:config.direcotry_path.'/sqlfix.sql is readable?'])
+    endif
+endfunction "}}}
+
+function! s:SqlfixWarning(warningList) abort "{{{
     echohl ErrorMsg
-        echomsg '[WARNING]Would you check a close bracket?'
-        echomsg 'REST:'.join(s:SqlfixStatus).', COUNT:'.s:SqlfixCloseBracket
-        echomsg 'SQL:'.a:wordBlock
+        for l:warning in a:warningList
+            echomsg l:warning
+        endfor
     echohl None
 endfunction "}}}
 
