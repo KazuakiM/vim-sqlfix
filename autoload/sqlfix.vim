@@ -201,7 +201,7 @@ function! sqlfix#Run() abort "{{{
             call quickrun#run(l:configQuickrunk)
         endif
     else
-        call s:SqlfixWarning(["[ERROR]Would you check g:quickrun_config['xxx/sql']['cmdopt'] or ".l:config.direcotry_path.'/sqlfix.sql is readable?'])
+        call s:SqlfixWarning(["[ERROR]Would you check g:quickrun_config['sql/xxx']['cmdopt'] or ".l:config.direcotry_path.'/sqlfix.sql is readable?'])
     endif
 endfunction "}}}
 
