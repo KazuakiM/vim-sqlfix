@@ -191,7 +191,8 @@ function! sqlfix#Run() abort "{{{
     let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:SqlfixDefaultConfig, 'keep')
 
     if filereadable(l:config.direcotry_path.'/sqlfix.sql') && exists('g:quickrun_config') is 1 &&
-        \ has_key(g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type], 'cmdopt')
+        \ has_key(g:quickrun_config, s:SqlfixQuickrunConfig[l:config.database].type) is 1 &&
+        \ has_key(g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type], 'cmdopt') is 1
         let l:sql = join(readfile(l:config.direcotry_path.'/sqlfix.sql'))
         echo "Please confirm SQL\nconfig\t:".g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type].cmdopt."\nSQL\t:".l:sql."\n"
         let l:select = confirm('Are you sure?', "&Yes\n&No\n", 2)
