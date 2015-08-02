@@ -1,6 +1,5 @@
 language: viml
-env:
-  - PATH="/usr/local/bin:$PATH"
+sudo:     false
 
 before_script:
   - git clone https://github.com/vim/vim --depth 1 /tmp/vim && cd /tmp/vim && ./configure --with-features=huge && sudo make && sudo make install && cd -
