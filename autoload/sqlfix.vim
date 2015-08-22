@@ -2,7 +2,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 "variable {{{
-let s:SqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'direcotry_path': ''}
+let s:SqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'output': 1, 'direcotry_path': ''}
 let s:SqlfixQuickrunConfig  = {
     \ 'mysql': {     'type': 'sql/mysql',    'command': 'mysql', 'exec': '%c %o < '},
     \ 'postgresql': {'type': 'sql/postgres', 'command': 'psql',  'exec': '%c %o -f '}}
@@ -29,14 +29,30 @@ let s:V = vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer')
 "}}}
 
 function! sqlfix#Normal() abort "{{{
-    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:SqlfixDefaultConfig, 'keep')
+    let l:config = extend(extend({}, exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, 'force'), s:SqlfixDefaultConfig, 'keep')
 
     call sqlfix#Fix(l:config)
     call s:SqlfixOutput(l:config, line('.'))
 endfunction "}}}
 
 function! sqlfix#Visual() range abort "{{{
-    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:SqlfixDefaultConfig, 'keep')
+    let l:config = extend(extend({}, exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, 'force'), s:SqlfixDefaultConfig, 'keep')
+
+    call sqlfix#Fix(l:config)
+    call s:SqlfixOutput(l:config, a:lastline)
+endfunction "}}}
+
+function! sqlfix#NormalFile() abort "{{{
+    let l:config        = extend(extend({}, exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, 'force'), s:SqlfixDefaultConfig, 'keep')
+    let l:config.output = 0
+
+    call sqlfix#Fix(l:config)
+    call s:SqlfixOutput(l:config, line('.'))
+endfunction "}}}
+
+function! sqlfix#VisualFile() range abort "{{{
+    let l:config        = extend(extend({}, exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, 'force'), s:SqlfixDefaultConfig, 'keep')
+    let l:config.output = 0
 
     call sqlfix#Fix(l:config)
     call s:SqlfixOutput(l:config, a:lastline)
@@ -179,7 +195,9 @@ endfunction "}}}
 
 function! s:SqlfixOutput(config, position) abort "{{{
     " Output buffer file
-    call append(a:position, s:SqlfixReturn)
+    if a:config.output is 1
+        call append(a:position, s:SqlfixReturn)
+    endif
 
     " Output file
     if isdirectory(a:config.direcotry_path)
@@ -188,7 +206,7 @@ function! s:SqlfixOutput(config, position) abort "{{{
 endfunction "}}}
 
 function! sqlfix#Run() abort "{{{
-    let l:config = extend(exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, s:SqlfixDefaultConfig, 'keep')
+    let l:config = extend(extend({}, exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, 'force'), s:SqlfixDefaultConfig, 'keep')
 
     if filereadable(l:config.direcotry_path.'/sqlfix.sql') && exists('g:quickrun_config') is 1 &&
         \ has_key(g:quickrun_config, s:SqlfixQuickrunConfig[l:config.database].type) is 1 &&

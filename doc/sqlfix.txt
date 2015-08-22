@@ -32,6 +32,7 @@ g:sqlfix#Config = {list}			*g:sqlfix#Config*
 		\ 'indent': 2,
 		\ 'width': -1,
 		\ 'explain': 1,
+		\ 'output': 1,
 		\ 'direcotry_path': ''}
 <
 database					*sqlfix-options-database*
@@ -49,6 +50,10 @@ explain						*sqlfix-options-explain*
 		If you want to set a 'EXPLAIN( ANALYZE)', you set '1'.
 		Default value is '0'(disable).
 
+output						*sqlfix-options-output*
+		If you want to output at buffer, you set '1'.
+		Default value is '1'(enable).
+
 direcotry_path					*sqlfix-options-direcotry_path*
 		If you want SQL file or |SqlffixRun|, you set directory
 		path. Default value is ''(disable).
@@ -62,6 +67,12 @@ COMMANDS					*sqlfix-commands*
 :'<,'>Sqlfix					*:'<,'>Sqlfix*
 	Execute |sqlfix#Visual()|.
 
+:SqlfixFile					*:SqlfixFile*
+	Execute |sqlfix#NormalFile()|.
+
+:'<,'>SqlfixFile				*:'<,'>SqlfixFile*
+	Execute |sqlfix#VisualFile()|.
+
 :SqlfixRun					*:SqlfixRun*
 	Execute |sqlfix#Run()|.
 
@@ -69,10 +80,16 @@ COMMANDS					*sqlfix-commands*
 FUNCTIONS					*sqlfix-functions*
 
 sqlfix#Normal()					*sqlfix#Normal()*
-	The last selected text in visual mode is formatted at SQL.
+	The last selected text(SQL) in visual mode is formatted at Buffer.
 
 sqlfix#Visual()					*sqlfix#Visual()*
-	Now selected text in visual mode is formatted at SQL.
+	Now selected text(SQL) in visual mode is formatted at Buffer.
+
+sqlfix#NormalFile()				*sqlfix#NormalFile()*
+	The last selected text(SQL) in visual mode is formatted at File.
+
+sqlfix#VisualFile()				*sqlfix#VisualFile()*
+	Now selected text(SQL) in visual mode is formatted at File.
 
 sqlfix#Run()					*sqlfix#Run()*
 	This function is depend on |quickrun| and
