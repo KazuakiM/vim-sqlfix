@@ -86,8 +86,7 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
         \ 'mem.status, mem.address',
         \ 'FROM (',
         \ '    SELECT *',
-        \ '    FROM member AS sub_mem',
-        \ '    ) AS mem;'])
+        \ '    FROM member AS sub_mem) AS mem;'])
     End
     "}}}
   End

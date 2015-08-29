@@ -137,7 +137,7 @@ function! sqlfix#Fix(config) abort "{{{
                 let l:wordBlock = toupper(l:words)
             endif
 
-        elseif a:config.width isnot -1 && a:config.width < len(l:wordBlock.' '.l:words)
+        elseif a:config.width isnot -1 && a:config.width < len(l:wordBlock.' '.l:words) && strpart(l:words, strlen(l:words) -1) is ','
             call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), a:config.indent)
             let l:wordBlock = ''
 
@@ -172,15 +172,7 @@ endfunction "}}}
 
 function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
     if strlen(a:wordBlock) > 0
-        let l:indentString = ''
-        let l:indentMax    = count(s:SqlfixStatus, 'bracket') * a:indent
-        if l:indentMax > 0
-            for l:indentIndex in range(l:indentMax)
-                let l:indentString = l:indentString.' '
-            endfor
-        endif
-
-        call add(s:SqlfixReturn, l:indentString.a:wordBlock)
+        call add(s:SqlfixReturn, repeat(' ', count(s:SqlfixStatus, 'bracket') * a:indent).a:wordBlock)
         while s:SqlfixCloseBracket < 0
             if len(s:SqlfixStatus) > 0
                 call remove(s:SqlfixStatus, -1)
