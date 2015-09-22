@@ -198,6 +198,25 @@ select * from users where id = 1 and email = 'test@sample.com'
     End
     "}}}
   End
+
+  Context Special word
+    "{{{
+    Before each
+      %delete _
+      append
+Select name, Count(*) as count From users Group By name
+.
+    End
+
+    It is OK case.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
+        \ 'SELECT name, COUNT(*) AS count',
+        \ 'FROM users',
+        \ 'GROUP BY name;'])
+    End
+    "}}}
+  End
 End
 
 " vim:fdl=0:sts=2:sw=2:ts=2

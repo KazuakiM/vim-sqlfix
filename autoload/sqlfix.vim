@@ -2,21 +2,22 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 "variable {{{
-let s:SqlfixDefaultConfig   = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'output': 1, 'direcotry_path': ''}
-let s:SqlfixQuickrunConfig  = {
+let s:SqlfixDefaultConfig = ! exists('s:SqlfixDefaultConfig') ? {
+    \ 'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'output': 1, 'direcotry_path': ''} : s:SqlfixDefaultConfig
+let s:SqlfixQuickrunConfig = ! exists('s:SqlfixQuickrunConfig') ? {
     \ 'mysql': {     'type': 'sql/mysql',    'command': 'mysql', 'exec': '%c %o < '},
-    \ 'postgresql': {'type': 'sql/postgres', 'command': 'psql',  'exec': '%c %o -f '}}
-let s:SqlfixFrameWork       = {'Yii':      '. Bound with'}
-let s:SqlfixKeywordsNewLine = [
+    \ 'postgresql': {'type': 'sql/postgres', 'command': 'psql',  'exec': '%c %o -f '}} : s:SqlfixQuickrunConfig
+let s:SqlfixFrameWork       = ! exists('s:SqlfixFrameWork') ? {'Yii': '. Bound with'} : s:SqlfixFrameWork
+let s:SqlfixKeywordsNewLine = ! exists('s:SqlfixKeywordsNewLine') ? [
     \ 'alter',  'and',    'begin', 'case',   'commit', 'create', 'delete',   'drop',   'else',     'elseif',
     \ 'end',    'from',   'grant', 'group',  'having', 'inner',  'insert',   'left',   'limit',    'lock',
     \ 'on',     'or',     'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'union',
-    \ 'unlock', 'update', 'when',  'where']
-let s:SqlfixKeywordsContinue = [
+    \ 'unlock', 'update', 'when',  'where'] : s:SqlfixKeywordsNewLine
+let s:SqlfixKeywordsContinue = ! exists('s:SqlfixKeywordsContinue') ? [
     \ 'add',               'after',   'all',      'as',    'asc',    'between', 'by',   'column', 'current_date', 'current_time',
     \ 'current_timestamp', 'desc',    'distinct', 'in',    'index',  'is',      'join', 'key',    'like',         'not',
-    \ 'null',              'primary', 'sysdate',  'table', 'tables', 'then',    'unique']
-let s:V = vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer')
+    \ 'null',              'primary', 'sysdate',  'table', 'tables', 'then',    'unique'] : s:SqlfixKeywordsContinue
+let s:V = ! exists('s:V') ? vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer') : s:V
 "}}}
 
 function! sqlfix#Normal() abort "{{{
@@ -61,12 +62,12 @@ function! sqlfix#Fix(config) abort "{{{
     " Supported FrameWork
     for l:key in keys(s:SqlfixFrameWork)
         let l:frameWorkIdx = stridx(l:sqlBody, s:SqlfixFrameWork[l:key])
-        if l:frameWorkIdx > -1 && l:key is 'Yii'
+        if l:frameWorkIdx > -1 && l:key ==? 'Yii'
             let l:frameWorkBinds = reverse(s:V.Data.List.sort_by(split(l:sqlBody[l:frameWorkIdx+13:], ',\s\+'), 'strlen(v:val)'))
             let l:sqlBody        = l:sqlBody[:l:frameWorkIdx-1]
             for l:frameWorkBind in l:frameWorkBinds
                 let l:frameWorkParam = split(l:frameWorkBind, '=')
-                if stridx(l:frameWorkParam[0], ':') is -1
+                if stridx(l:frameWorkParam[0], ':') is# -1
                     let l:sqlBody = substitute(l:sqlBody, ':'. l:frameWorkParam[0], l:frameWorkParam[1], 'g')
                 else
                     let l:sqlBody = substitute(l:sqlBody,      l:frameWorkParam[0], l:frameWorkParam[1], 'g')
@@ -80,14 +81,14 @@ function! sqlfix#Fix(config) abort "{{{
     let l:oldLineLow = ''
     while l:oldLineLow != l:sqlBody
         let l:oldLineLow = l:sqlBody
-        let l:sqlBody    = s:V.Data.String.trim(substitute(substitute(substitute(substitute(
-        \    l:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g'))
+        let l:sqlBody    = s:V.Data.String.trim(substitute(substitute(substitute(substitute(substitute(
+            \ l:sqlBody, '(', '( ', 'g'), ')', ' )', 'g'), '(\s\*\s)', '(*)', 'g'), ',\s\+\|,', ', ', 'g'), '\s\+', ' ', 'g'))
     endwhile
     "PP '['.l:sqlBody.']'
 
     " Add Explain
-    if a:config.explain is 1
-        if a:config.database is 'postgresql'
+    if a:config.explain is# 1
+        if a:config.database ==? 'postgresql'
             call s:SqlfixAddReturn('EXPLAIN ANALYZE', a:config.indent)
         else
             call s:SqlfixAddReturn('EXPLAIN',         a:config.indent)
@@ -106,9 +107,12 @@ function! sqlfix#Fix(config) abort "{{{
     for l:words in split(l:sqlBody, ' ')
         if match(l:words, '\w(') > -1
             let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
-            call add(s:SqlfixStatus, 'function')
+            "Supported '(*)' case.
+            if stridx(l:words, ')') is# -1
+                call add(s:SqlfixStatus, 'function')
+            endif
 
-        elseif stridx(l:words, '(') is 0
+        elseif stridx(l:words, '(') is# 0
             call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), a:config.indent)
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = ''
@@ -128,7 +132,7 @@ function! sqlfix#Fix(config) abort "{{{
                 let l:wordBlock = toupper(l:words)
             endif
 
-        elseif a:config.width isnot -1 && a:config.width < len(l:wordBlock .' '. l:words) && strpart(l:words, strlen(l:words) -1) is ','
+        elseif a:config.width isnot -1 && a:config.width < len(l:wordBlock .' '. l:words) && strpart(l:words, strlen(l:words) -1) is# ','
             call s:SqlfixAddReturn(s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 0), a:config.indent)
             let l:wordBlock = ''
 
@@ -142,14 +146,15 @@ function! sqlfix#Fix(config) abort "{{{
 
     " Check bracket.
     if s:SqlfixCloseBracket < 0 || len(s:SqlfixStatus) > 0
-        call s:SqlfixWarning(['[WARNING]Would you check a close bracket?', 'REST:'. join(s:SqlfixStatus) .', COUNT:'. s:SqlfixCloseBracket, 'SQL:'. l:wordBlock])
+        call s:SqlfixWarning(['[WARNING]Would you check a close bracket?',
+            \ 'REST:'. join(s:SqlfixStatus) .', COUNT:'. s:SqlfixCloseBracket, 'SQL:'. l:wordBlock])
     endif
 
     return s:SqlfixReturn
 endfunction "}}}
 
 function! s:SqlfixCheckWordBlockSpaceExist(wordBlock, words, toupper) abort "{{{
-    if len(a:wordBlock) is 0
+    if len(a:wordBlock) is# 0
         if a:toupper
             return toupper(a:words)
         else
@@ -169,7 +174,7 @@ function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
                 call remove(s:SqlfixStatus, -1)
             else
                 call s:SqlfixWarning(['[WARNING]Would you check a close bracket?',
-                \    'REST:'. join(s:SqlfixStatus) .', COUNT:'. s:SqlfixCloseBracket, 'SQL:'. a:wordBlock])
+                    \ 'REST:'. join(s:SqlfixStatus) .', COUNT:'. s:SqlfixCloseBracket, 'SQL:'. a:wordBlock])
             endif
             let s:SqlfixCloseBracket += 1
         endwhile
@@ -179,7 +184,7 @@ endfunction "}}}
 
 function! s:SqlfixOutput(config, position) abort "{{{
     " Output buffer file
-    if a:config.output is 1
+    if a:config.output ==? 1
         call append(a:position, s:SqlfixReturn)
     endif
 
@@ -192,9 +197,9 @@ endfunction "}}}
 function! sqlfix#Run() abort "{{{
     let l:config = extend(extend({}, exists('g:sqlfix#Config') ? g:sqlfix#Config : {}, 'force'), s:SqlfixDefaultConfig, 'keep')
 
-    if filereadable(l:config.direcotry_path.'/sqlfix.sql') && exists('g:quickrun_config') is 1 &&
-        \ has_key(g:quickrun_config, s:SqlfixQuickrunConfig[l:config.database].type) is 1 &&
-        \ has_key(g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type], 'cmdopt') is 1
+    if filereadable(l:config.direcotry_path.'/sqlfix.sql') && exists('g:quickrun_config') is# 1 &&
+        \ has_key(g:quickrun_config, s:SqlfixQuickrunConfig[l:config.database].type) is# 1 &&
+        \ has_key(g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type], 'cmdopt') is# 1
         let l:sql = join(readfile(l:config.direcotry_path.'/sqlfix.sql'))
         echo "Please confirm SQL\nconfig\t:". g:quickrun_config[s:SqlfixQuickrunConfig[l:config.database].type].cmdopt ."\nSQL\t:". l:sql ."\n"
         let l:select = confirm('Are you sure?', "&Yes\n&No\n", 2)
