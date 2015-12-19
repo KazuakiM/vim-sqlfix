@@ -7,16 +7,38 @@ let s:SqlfixDefaultConfig = ! exists('s:SqlfixDefaultConfig') ? {
 let s:SqlfixQuickrunConfig = ! exists('s:SqlfixQuickrunConfig') ? {
     \ 'mysql': {     'type': 'sql/mysql',    'command': 'mysql', 'exec': '%c %o < '},
     \ 'postgresql': {'type': 'sql/postgres', 'command': 'psql',  'exec': '%c %o -f '}} : s:SqlfixQuickrunConfig
-let s:SqlfixFrameWork       = ! exists('s:SqlfixFrameWork') ? {'Yii': '. Bound with'} : s:SqlfixFrameWork
+let s:SqlfixFrameWork       = ! exists('s:SqlfixFrameWork')       ? {'Yii': '. Bound with'} : s:SqlfixFrameWork
 let s:SqlfixKeywordsNewLine = ! exists('s:SqlfixKeywordsNewLine') ? [
-    \ 'alter',  'and',    'begin', 'case',   'commit', 'create', 'delete',   'drop',   'else',     'elseif',
-    \ 'end',    'from',   'grant', 'group',  'having', 'inner',  'insert',   'left',   'limit',    'lock',
-    \ 'on',     'or',     'order', 'rename', 'revoke', 'right',  'rollback', 'select', 'truncate', 'union',
-    \ 'unlock', 'update', 'when',  'where'] : s:SqlfixKeywordsNewLine
+    \ 'alter',    'and',
+    \ 'begin',
+    \ 'commit',   'create',
+    \ 'delete',   'drop',
+    \ 'else',     'elseif', 'end',
+    \ 'from',
+    \ 'grant',    'group',
+    \ 'having',
+    \ 'inner',    'insert',
+    \ 'left',     'limit',  'lock',
+    \ 'on',       'or',     'order',
+    \ 'rename',   'revoke', 'right',  'rollback',
+    \ 'select',
+    \ 'truncate',
+    \ 'union',    'unlock', 'update',
+    \ 'when',     'where'] : s:SqlfixKeywordsNewLine
 let s:SqlfixKeywordsContinue = ! exists('s:SqlfixKeywordsContinue') ? [
-    \ 'add',               'after',   'all',      'as',    'asc',    'between', 'by',   'column', 'current_date', 'current_time',
-    \ 'current_timestamp', 'desc',    'distinct', 'in',    'index',  'is',      'join', 'key',    'like',         'not',
-    \ 'null',              'primary', 'sysdate',  'table', 'tables', 'then',    'unique'] : s:SqlfixKeywordsContinue
+    \ 'add',     'after',        'all',          'as',                'asc',
+    \ 'between', 'by',
+    \ 'column',  'current_date', 'current_time', 'current_timestamp',
+    \ 'desc',    'distinct',
+    \ 'in',      'index',        'is',
+    \ 'join',
+    \ 'key',
+    \ 'like',
+    \ 'not',     'null',
+    \ 'primary',
+    \ 'sysdate',
+    \ 'table',   'tables',       'then',
+    \ 'unique'] : s:SqlfixKeywordsContinue
 let s:V = ! exists('s:V') ? vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer') : s:V
 "}}}
 
@@ -117,12 +139,22 @@ function! sqlfix#Fix(config) abort "{{{
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = ''
 
+        elseif l:words is 'end'
+            call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
+            let l:wordBlock           = toupper(l:words)
+            let s:SqlfixCloseBracket -= 1
+
         elseif stridx(l:words, ')') > -1
             let l:wordBlock           = l:wordBlock . l:words
             let s:SqlfixCloseBracket -= 1
 
         elseif count(s:SqlfixKeywordsContinue, l:words, 1) >= 1
             let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
+
+        elseif l:words == 'case'
+            call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
+            call add(s:SqlfixStatus, 'bracket')
+            let l:wordBlock = toupper(l:words)
 
         elseif count(s:SqlfixKeywordsNewLine, l:words, 1) >= 1
             if count(s:SqlfixStatus, 'function') + s:SqlfixCloseBracket > 0
