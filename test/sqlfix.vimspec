@@ -101,7 +101,8 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
     CASE
       WHEN mem.address IS NOT NULL THEN mem.address
       WHEN mem.tel     IS NOT NULL THEN mem.tel
-      ELSE mem.mailaddress END AS mailaddress
+      ELSE mem.mailaddress END AS mailaddress,
+    mem.name
     FROM member mem
 ) UNION ALL (
   SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM(mem.attribute IN ('hoge', 'huga') AND mem.status = 1) < SUM(mem.attribute IN ('hoge', 'huga') AND mem.status = 0), 0, 1) AS full_status, NULL
@@ -121,12 +122,11 @@ ORDER BY type ASC, id ASC;
       normal! ggVGy
       Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
       \ '(',
-      \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel,",
-      \ '    CASE',
+      \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel, CASE",
       \ '    WHEN mem.address IS NOT NULL THEN mem.address',
       \ '    WHEN mem.tel IS NOT NULL THEN mem.tel',
       \ '    ELSE mem.mailaddress',
-      \ '    END AS mailaddress',
+      \ '    END AS mailaddress, mem.name',
       \ '    FROM member mem)',
       \ 'UNION ALL (',
       \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM( mem.attribute IN (",
@@ -214,6 +214,60 @@ Select name, Count(*) as count From users Group By name
         \ 'SELECT name, COUNT(*) AS count',
         \ 'FROM users',
         \ 'GROUP BY name;'])
+    End
+    "}}}
+  End
+
+  Context Case simple
+    "{{{
+    Before each
+      %delete _
+      append
+select
+case mode
+when 1 then 'OK'
+when 0 then 'NG'
+end as mode
+from users
+.
+    End
+
+    It is OK case.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
+        \ 'SELECT',
+        \ '    CASE mode',
+        \ "    WHEN 1 THEN 'OK'",
+        \ "    WHEN 0 THEN 'NG'",
+        \ '    END AS mode',
+        \ 'FROM users;'])
+    End
+    "}}}
+  End
+
+  Context Case multi
+    "{{{
+    Before each
+      %delete _
+      append
+select
+case
+when mode = 1 then 'OK'
+when name = 'azusa' then 'NG'
+end as mode
+from users
+.
+    End
+
+    It is OK case.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
+        \ 'SELECT',
+        \ '    CASE',
+        \ "    WHEN mode = 1 THEN 'OK'",
+        \ "    WHEN name = 'azusa' THEN 'NG'",
+        \ '    END AS mode',
+        \ 'FROM users;'])
     End
     "}}}
   End
