@@ -122,12 +122,11 @@ ORDER BY type ASC, id ASC;
       normal! ggVGy
       Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
       \ '(',
-      \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel,",
-      \ '        CASE',
-      \ '        WHEN mem.address IS NOT NULL THEN mem.address',
-      \ '        WHEN mem.tel IS NOT NULL THEN mem.tel',
-      \ '        ELSE mem.mailaddress',
-      \ '        END AS mailaddress, mem.name',
+      \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel, CASE",
+      \ '    WHEN mem.address IS NOT NULL THEN mem.address',
+      \ '    WHEN mem.tel IS NOT NULL THEN mem.tel',
+      \ '    ELSE mem.mailaddress',
+      \ '    END AS mailaddress, mem.name',
       \ '    FROM member mem)',
       \ 'UNION ALL (',
       \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM( mem.attribute IN (",
