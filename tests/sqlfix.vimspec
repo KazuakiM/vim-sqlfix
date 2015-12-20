@@ -223,24 +223,37 @@ Select name, Count(*) as count From users Group By name
     Before each
       %delete _
       append
-select
-case mode
-when 1 then 'OK'
-when 0 then 'NG'
-end as mode
-from users
+SELECT id,
+  CASE id
+    WHEN '91' THEN '三浦あずさ'
+    WHEN '72' THEN '如月千早'
+    ELSE 'その他'
+    END AS name,
+  COUNT(*) AS count
+FROM users
+GROUP BY
+  CASE id
+    WHEN '91' THEN '三浦あずさ'
+    WHEN '72' THEN '如月千早'
+    ELSE 'その他'
+    END;
 .
     End
 
     It is OK case.
       normal! ggVGy
       Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT',
-        \ '    CASE mode',
-        \ "    WHEN 1 THEN 'OK'",
-        \ "    WHEN 0 THEN 'NG'",
-        \ '    END AS mode',
-        \ 'FROM users;'])
+        \ 'SELECT id, CASE id',
+        \ "WHEN '91' THEN '三浦あずさ'",
+        \ "WHEN '72' THEN '如月千早'",
+        \ "ELSE 'その他'",
+        \ 'END AS name, COUNT(*) AS count',
+        \ 'FROM users',
+        \ 'GROUP BY CASE id',
+        \ "WHEN '91' THEN '三浦あずさ'",
+        \ "WHEN '72' THEN '如月千早'",
+        \ "ELSE 'その他'",
+        \ 'END;'])
     End
     "}}}
   End

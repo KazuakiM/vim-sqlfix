@@ -117,10 +117,14 @@ function! sqlfix#Fix(config) abort "{{{
         endif
     endif
 
-    " Add EndWords
-    let l:sqlBodyLen = strlen(l:sqlBody)
-    if strpart(l:sqlBody, l:sqlBodyLen -1) isnot ';' && strpart(l:sqlBody, l:sqlBodyLen -2) isnot '\G'
-        let l:sqlBody = l:sqlBody .';'
+    " Get EndWords
+    let l:sqlEndWords = ';'
+    let l:sqlBodyLen  = strlen(l:sqlBody)
+    if strpart(l:sqlBody, l:sqlBodyLen -1) is ';'
+        let l:sqlBody = l:sqlBody[0:-2]
+    elseif strpart(l:sqlBody, l:sqlBodyLen -2) is '\G'
+        let l:sqlBody = l:sqlBody[0:-3]
+        let l:sqlEndWords = '\G'
     endif
     "PP '['.l:sqlBody.']'
 
@@ -173,6 +177,10 @@ function! sqlfix#Fix(config) abort "{{{
         endif
         "echo '['.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:words.': '.l:wordBlock.']'
     endfor
+
+    " Add EndWords
+    let l:wordBlock = l:wordBlock . l:sqlEndWords
+
     " Rest wordBlock
     call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
 
