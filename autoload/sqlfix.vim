@@ -27,7 +27,7 @@ let s:SqlfixKeywordsNewLine = ! exists('s:SqlfixKeywordsNewLine') ? [
     \ 'when',     'where'] : s:SqlfixKeywordsNewLine
 let s:SqlfixKeywordsContinue = ! exists('s:SqlfixKeywordsContinue') ? [
     \ 'add',     'after',        'all',          'as',                'asc',
-    \ 'between', 'by',
+    \ 'by',
     \ 'column',  'current_date', 'current_time', 'current_timestamp',
     \ 'desc',    'distinct',
     \ 'in',      'index',        'is',
@@ -84,7 +84,7 @@ function! sqlfix#Fix(config) abort "{{{
     " Supported FrameWork
     for l:key in keys(s:SqlfixFrameWork)
         let l:frameWorkIdx = stridx(l:sqlBody, s:SqlfixFrameWork[l:key])
-        if l:frameWorkIdx > -1 && l:key ==? 'Yii'
+        if -1 < l:frameWorkIdx && l:key ==? 'Yii'
             let l:frameWorkBinds = reverse(s:V.Data.List.sort_by(split(l:sqlBody[l:frameWorkIdx+13:], ',\s\+'), 'strlen(v:val)'))
             let l:sqlBody        = l:sqlBody[:l:frameWorkIdx-1]
             for l:frameWorkBind in l:frameWorkBinds
@@ -131,7 +131,7 @@ function! sqlfix#Fix(config) abort "{{{
     " Split word.
     let l:wordBlock = ''
     for l:words in split(l:sqlBody, ' ')
-        if match(l:words, '\w(') > -1
+        if -1 < match(l:words, '\w(')
             let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
             "Supported '(*)' case.
             if stridx(l:words, ')') is# -1
@@ -143,7 +143,7 @@ function! sqlfix#Fix(config) abort "{{{
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = ''
 
-        elseif stridx(l:words, ')') > -1
+        elseif -1 < stridx(l:words, ')')
             let l:wordBlock           = l:wordBlock . l:words
             let s:SqlfixCloseBracket -= 1
 
@@ -157,11 +157,15 @@ function! sqlfix#Fix(config) abort "{{{
             let l:wordBlock           = toupper(l:words)
             let s:SqlfixCloseBracket -= 1
 
-        elseif count(s:SqlfixKeywordsContinue, l:words, 1) >= 1
+        elseif l:words is 'between'
+            let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
+            call add(s:SqlfixStatus, 'row_line')
+
+        elseif 1 <= count(s:SqlfixKeywordsContinue, l:words, 1)
             let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
 
-        elseif count(s:SqlfixKeywordsNewLine, l:words, 1) >= 1
-            if count(s:SqlfixStatus, 'function') + s:SqlfixCloseBracket > 0
+        elseif 1 <= count(s:SqlfixKeywordsNewLine, l:words, 1)
+            if 0 < count(s:SqlfixStatus, 'function') + s:SqlfixCloseBracket
                 let l:wordBlock = s:SqlfixCheckWordBlockSpaceExist(l:wordBlock, l:words, 1)
             else
                 call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
@@ -185,7 +189,7 @@ function! sqlfix#Fix(config) abort "{{{
     call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
 
     " Check bracket.
-    if s:SqlfixCloseBracket < 0 || len(s:SqlfixStatus) > 0
+    if s:SqlfixCloseBracket < 0 || 0 < len(s:SqlfixStatus)
         call s:SqlfixWarning(['[WARNING]Would you check a close bracket?',
             \ 'REST:'. join(s:SqlfixStatus) .', COUNT:'. s:SqlfixCloseBracket, 'SQL:'. l:wordBlock])
     endif
@@ -207,10 +211,16 @@ function! s:SqlfixCheckWordBlockSpaceExist(wordBlock, words, toupper) abort "{{{
 endfunction "}}}
 
 function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
-    if strlen(a:wordBlock) > 0
-        call add(s:SqlfixReturn, repeat(' ', count(s:SqlfixStatus, 'bracket') * a:indent) . a:wordBlock)
+    if 0 < strlen(a:wordBlock)
+        if 0 < len(s:SqlfixStatus) && 0 < count(s:SqlfixStatus, 'row_line') && stridx(a:wordBlock, 'BETWEEN') is# -1
+            let s:SqlfixReturn[-1] = s:SqlfixReturn[-1] .' '. a:wordBlock
+            call remove(s:SqlfixStatus, -1)
+        else
+            call add(s:SqlfixReturn, repeat(' ', count(s:SqlfixStatus, 'bracket') * a:indent) . a:wordBlock)
+        endif
+
         while s:SqlfixCloseBracket < 0
-            if len(s:SqlfixStatus) > 0
+            if 0 < len(s:SqlfixStatus)
                 call remove(s:SqlfixStatus, -1)
             else
                 call s:SqlfixWarning(['[WARNING]Would you check a close bracket?',
@@ -218,7 +228,7 @@ function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
             endif
             let s:SqlfixCloseBracket += 1
         endwhile
-        "echo '<'.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.l:indentString.a:wordBlock.'>'
+        "echo '<'.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.'>'
     endif
 endfunction "}}}
 
