@@ -10,7 +10,7 @@ before_script:
 script:
   - echo $PATH
   - vim --cmd version --cmd quit
-  - /tmp/vim-themis/bin/themis test/ -r --reporter dot
+  - /tmp/vim-themis/bin/themis tests/ -r --reporter dot
 
 notifications:
   email: false

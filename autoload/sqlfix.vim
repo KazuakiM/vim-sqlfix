@@ -139,6 +139,10 @@ function! sqlfix#Fix(config) abort "{{{
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = ''
 
+        elseif stridx(l:words, ')') > -1
+            let l:wordBlock           = l:wordBlock . l:words
+            let s:SqlfixCloseBracket -= 1
+
         elseif l:words is 'case'
             call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
             call add(s:SqlfixStatus, 'bracket')
@@ -147,10 +151,6 @@ function! sqlfix#Fix(config) abort "{{{
         elseif l:words is 'end'
             call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
             let l:wordBlock           = toupper(l:words)
-            let s:SqlfixCloseBracket -= 1
-
-        elseif stridx(l:words, ')') > -1
-            let l:wordBlock           = l:wordBlock . l:words
             let s:SqlfixCloseBracket -= 1
 
         elseif count(s:SqlfixKeywordsContinue, l:words, 1) >= 1
