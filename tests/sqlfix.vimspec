@@ -1,6 +1,6 @@
 " Basic {{{
 scriptencoding utf-8
-source ../vim-sqlfix/autoload/sqlfix.vim
+source autoload/sqlfix.vim
 call themis#helper('command').with(themis#helper('assert')).with({'Expect': themis#helper('expect')})
 "}}}
 
