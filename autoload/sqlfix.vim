@@ -39,6 +39,7 @@ let s:SqlfixKeywordsContinue = ! exists('s:SqlfixKeywordsContinue') ? [
     \ 'sysdate',
     \ 'table',   'tables',       'then',
     \ 'unique'] : s:SqlfixKeywordsContinue
+let s:save_fileformat_code = ! exists('s:save_fileformat_code') ? (&fileformat is# 'unix') ? "\n" : (&fileformat is# 'mac') ? "\r" : "\r\n" : s:save_fileformat_code
 let s:V = ! exists('s:V') ? vital#of('sqlfix').load('Data.List', 'Data.String', 'Vim.Buffer') : s:V
 "}}}
 
@@ -74,7 +75,7 @@ endfunction "}}}
 
 function! sqlfix#Fix(config) abort "{{{
     " Init
-    let s:SqlfixReturn       = []
+    let s:SqlfixReturn       = ''
     let s:SqlfixCloseBracket = 0
     let s:SqlfixStatus       = []
 
@@ -98,6 +99,18 @@ function! sqlfix#Fix(config) abort "{{{
         endif
     endfor
     "PP '['.l:sqlBody.']'
+
+    " Backup escape string
+    let l:escapeList  = []
+    let l:escapeIndex = 0
+    let l:oldLineLow  = ''
+    while l:oldLineLow != l:sqlBody
+        let l:oldLineLow = l:sqlBody
+        call add(l:escapeList, matchstr(l:sqlBody, "'[^'']*'"))
+        let l:sqlBody = substitute(l:sqlBody, "'[^'']*'", '___sqlfix'. l:escapeIndex, '')
+        let l:escapeIndex += 1
+    endwhile
+    "PP '['.l:sqlBody.': Binding..'.join(l:escapeList) .']'
 
     " Trim
     let l:oldLineLow = ''
@@ -194,6 +207,14 @@ function! sqlfix#Fix(config) abort "{{{
             \ 'REST:'. join(s:SqlfixStatus) .', COUNT:'. s:SqlfixCloseBracket, 'SQL:'. l:wordBlock])
     endif
 
+    " Return escape string
+    let l:escapeIndex = 0
+    for l:escapeRow in l:escapeList
+        let s:SqlfixReturn = substitute(s:SqlfixReturn, '___sqlfix'. l:escapeIndex, l:escapeRow, '')
+        let l:escapeIndex += 1
+    endfor
+    "echo '['. s:SqlfixReturn .']'
+
     return s:SqlfixReturn
 endfunction "}}}
 
@@ -213,10 +234,10 @@ endfunction "}}}
 function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
     if 0 < strlen(a:wordBlock)
         if 0 < len(s:SqlfixStatus) && 0 < count(s:SqlfixStatus, 'row_line') && stridx(a:wordBlock, 'BETWEEN') is# -1
-            let s:SqlfixReturn[-1] = s:SqlfixReturn[-1] .' '. a:wordBlock
+            let s:SqlfixReturn = s:SqlfixReturn .' '. a:wordBlock
             call remove(s:SqlfixStatus, -1)
         else
-            call add(s:SqlfixReturn, repeat(' ', count(s:SqlfixStatus, 'bracket') * a:indent) . a:wordBlock)
+            let s:SqlfixReturn = s:SqlfixReturn . repeat(' ', count(s:SqlfixStatus, 'bracket') * a:indent) . a:wordBlock . s:save_fileformat_code
         endif
 
         while s:SqlfixCloseBracket < 0
@@ -233,14 +254,16 @@ function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
 endfunction "}}}
 
 function! s:SqlfixOutput(config, position) abort "{{{
+    let l:output = split(s:SqlfixReturn, s:save_fileformat_code)
+
     " Output buffer file
     if a:config.output ==? 1
-        call append(a:position, s:SqlfixReturn)
+        call append(a:position, l:output)
     endif
 
     " Output file
     if isdirectory(a:config.direcotry_path)
-        call writefile(s:SqlfixReturn, a:config.direcotry_path.'/sqlfix.sql')
+        call writefile(l:output, a:config.direcotry_path.'/sqlfix.sql')
     endif
 endfunction "}}}
 

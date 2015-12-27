@@ -7,6 +7,10 @@ call themis#helper('command').with(themis#helper('assert')).with({'Expect': them
 Describe vim-sqlfix
   Before all
     let l:sqlfixDefaultConfig  = {'database': 'mysql', 'indent': 4, 'width': 180, 'explain': 0, 'direcotry_path': ''}
+    let l:save_fileformat_code = ! exists('s:save_fileformat_code') ?
+        \ (&fileformat is# 'unix') ? "\n"   :
+        \ (&fileformat is# 'mac')  ? "\r"   :
+        \ "\r\n" : s:save_fileformat_code
   End
 
   Context Simple
@@ -21,72 +25,72 @@ SELECT mem.id AS member_id,mem.name AS member_name, mem.status,  mem.address FRO
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-        \ 'FROM (',
-        \ '    SELECT *',
-        \ '    FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '    SELECT *'. l:save_fileformat_code .
+        \ '    FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
     End
 
     It is g:sqlfix#Config.indent = 2 case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({'indent': 2}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-        \ 'FROM (',
-        \ '  SELECT *',
-        \ '  FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({'indent': 2}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '  SELECT *'. l:save_fileformat_code .
+        \ '  FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
     End
 
     It is g:sqlfix#Config.database = 'postgresql' case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({'database': 'postgresql', 'explain': 1}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'EXPLAIN ANALYZE',
-        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-        \ 'FROM (',
-        \ '    SELECT *',
-        \ '    FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({'database': 'postgresql', 'explain': 1}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'EXPLAIN ANALYZE'. l:save_fileformat_code .
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '    SELECT *'. l:save_fileformat_code .
+        \ '    FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({'database': 'postgresql', 'explain': 0}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-        \ 'FROM (',
-        \ '    SELECT *',
-        \ '    FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({'database': 'postgresql', 'explain': 0}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '    SELECT *'. l:save_fileformat_code .
+        \ '    FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
     End
 
     It is g:sqlfix#Config.database = 'mysql' case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({'database': 'mysql', 'explain': 1}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'EXPLAIN',
-        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-        \ 'FROM (',
-        \ '    SELECT *',
-        \ '    FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({'database': 'mysql', 'explain': 1}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'EXPLAIN'. l:save_fileformat_code .
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '    SELECT *'. l:save_fileformat_code .
+        \ '    FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({'database': 'mysql', 'explain': 0}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-        \ 'FROM (',
-        \ '    SELECT *',
-        \ '    FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({'database': 'mysql', 'explain': 0}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '    SELECT *'. l:save_fileformat_code .
+        \ '    FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
     End
 
     It is g:sqlfix#Config.width = -1 case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({'width': -1}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address',
-        \ 'FROM (',
-        \ '    SELECT *',
-        \ '    FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({'width': -1}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT mem.id AS member_id, mem.name AS member_name, mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '    SELECT *'. l:save_fileformat_code .
+        \ '    FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
     End
 
     It is g:sqlfix#Config.width = 20 case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({'width': 20}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT mem.id AS member_id,',
-        \ 'mem.name AS member_name,',
-        \ 'mem.status, mem.address',
-        \ 'FROM (',
-        \ '    SELECT *',
-        \ '    FROM member AS sub_mem) AS mem;'])
+      Assert Equals(sqlfix#Fix(extend({'width': 20}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT mem.id AS member_id,'. l:save_fileformat_code .
+        \ 'mem.name AS member_name,'. l:save_fileformat_code .
+        \ 'mem.status, mem.address'. l:save_fileformat_code .
+        \ 'FROM ('. l:save_fileformat_code .
+        \ '    SELECT *'. l:save_fileformat_code .
+        \ '    FROM member AS sub_mem) AS mem;'. l:save_fileformat_code)
     End
     "}}}
   End
@@ -120,34 +124,34 @@ ORDER BY type ASC, id ASC;
 
     It is chihaya is cute.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-      \ '(',
-      \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel, CASE",
-      \ '    WHEN mem.address IS NOT NULL THEN mem.address',
-      \ '    WHEN mem.tel IS NOT NULL THEN mem.tel',
-      \ '    ELSE mem.mailaddress',
-      \ '    END AS mailaddress, mem.name',
-      \ '    FROM member mem)',
-      \ 'UNION ALL (',
-      \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM( mem.attribute IN (",
-      \ "        'hoge', 'huga') AND mem.status = 1) < SUM( mem.attribute IN (",
-      \ "        'hoge', 'huga') AND mem.status = 0), 0, 1) AS full_status, NULL",
-      \ '    FROM leave_member lev',
-      \ '    INNER JOIN member mem',
-      \ '    ON (',
-      \ '        lev.member_id = mem.id',
-      \ "        AND mem.leave_date <= '2072-07-02 00:07:02')",
-      \ '    WHERE (',
-      \ '        (',
-      \ "            lev.year = '2014'",
-      \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
-      \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59'))",
-      \ '        OR (',
-      \ "            lev.year = '2015'",
-      \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'",
-      \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59')))",
-      \ '    GROUP BY lev.id)',
-      \ 'ORDER BY type ASC, id ASC;'])
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+      \ '('. l:save_fileformat_code .
+      \ "    SELECT 'azusa' AS type, mem.id AS member_id, IFNULL( mem.tel, '') AS tel, CASE". l:save_fileformat_code .
+      \ '    WHEN mem.address IS NOT NULL THEN mem.address'. l:save_fileformat_code .
+      \ '    WHEN mem.tel IS NOT NULL THEN mem.tel'. l:save_fileformat_code .
+      \ '    ELSE mem.mailaddress'. l:save_fileformat_code .
+      \ '    END AS mailaddress, mem.name'. l:save_fileformat_code .
+      \ '    FROM member mem)'. l:save_fileformat_code .
+      \ 'UNION ALL ('. l:save_fileformat_code .
+      \ "    SELECT 'chihaya' AS type, lev.id AS leave_id, IF( SUM( mem.attribute IN (". l:save_fileformat_code .
+      \ "        'hoge', 'huga') AND mem.status = 1) < SUM( mem.attribute IN (". l:save_fileformat_code .
+      \ "        'hoge', 'huga') AND mem.status = 0), 0, 1) AS full_status, NULL". l:save_fileformat_code .
+      \ '    FROM leave_member lev'. l:save_fileformat_code .
+      \ '    INNER JOIN member mem'. l:save_fileformat_code .
+      \ '    ON ('. l:save_fileformat_code .
+      \ '        lev.member_id = mem.id'. l:save_fileformat_code .
+      \ "        AND mem.leave_date <= '2072-07-02 00:07:02')". l:save_fileformat_code .
+      \ '    WHERE ('. l:save_fileformat_code .
+      \ '        ('. l:save_fileformat_code .
+      \ "            lev.year = '2014'". l:save_fileformat_code .
+      \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'". l:save_fileformat_code .
+      \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59'))". l:save_fileformat_code .
+      \ '        OR ('. l:save_fileformat_code .
+      \ "            lev.year = '2015'". l:save_fileformat_code .
+      \ "            AND lev.birthday BETWEEN '2014-02-25 00:00:00'". l:save_fileformat_code .
+      \ "            AND DATE_FORMAT( '2015-02-25', '%Y-%m-%d 23:59:59')))". l:save_fileformat_code .
+      \ '    GROUP BY lev.id)'. l:save_fileformat_code .
+      \ 'ORDER BY type ASC, id ASC;'. l:save_fileformat_code)
     End
     "}}}
   End
@@ -167,14 +171,14 @@ SELECT mem.id AS member_id
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT mem.id AS member_id',
-        \ 'FROM member AS mem',
-        \ "WHERE mem.started_at <= '2072-07-02 00:07:02'",
-        \ "AND '2091-09-01 00:09:01' < mem.ended_at",
-        \ 'AND mem.id IN (',
-        \ '    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)',
-        \ 'AND mem.status = 1;'])
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT mem.id AS member_id'. l:save_fileformat_code .
+        \ 'FROM member AS mem'. l:save_fileformat_code .
+        \ "WHERE mem.started_at <= '2072-07-02 00:07:02'". l:save_fileformat_code .
+        \ "AND '2091-09-01 00:09:01' < mem.ended_at". l:save_fileformat_code .
+        \ 'AND mem.id IN ('. l:save_fileformat_code .
+        \ '    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)'. l:save_fileformat_code .
+        \ 'AND mem.status = 1;'. l:save_fileformat_code)
     End
     "}}}
   End
@@ -190,11 +194,11 @@ select * from users where id = 1 and email = 'test@sample.com'
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT *',
-        \ 'FROM users',
-        \ 'WHERE id = 1',
-        \ "AND email = 'test@sample.com';"])
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT *'. l:save_fileformat_code .
+        \ 'FROM users'. l:save_fileformat_code .
+        \ 'WHERE id = 1'. l:save_fileformat_code .
+        \ "AND email = 'test@sample.com';". l:save_fileformat_code)
     End
     "}}}
   End
@@ -210,10 +214,10 @@ Select name, Count(*) as count From users Group By name
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT name, COUNT(*) AS count',
-        \ 'FROM users',
-        \ 'GROUP BY name;'])
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT name, COUNT(*) AS count'. l:save_fileformat_code .
+        \ 'FROM users'. l:save_fileformat_code .
+        \ 'GROUP BY name;'. l:save_fileformat_code)
     End
     "}}}
   End
@@ -242,18 +246,18 @@ GROUP BY
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT id, CASE id',
-        \ "WHEN '91' THEN '三浦あずさ'",
-        \ "WHEN '72' THEN '如月千早'",
-        \ "ELSE 'その他'",
-        \ 'END AS name, COUNT(*) AS count',
-        \ 'FROM users',
-        \ 'GROUP BY CASE id',
-        \ "WHEN '91' THEN '三浦あずさ'",
-        \ "WHEN '72' THEN '如月千早'",
-        \ "ELSE 'その他'",
-        \ 'END;'])
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT id, CASE id'. l:save_fileformat_code .
+        \ "WHEN '91' THEN '三浦あずさ'". l:save_fileformat_code .
+        \ "WHEN '72' THEN '如月千早'". l:save_fileformat_code .
+        \ "ELSE 'その他'". l:save_fileformat_code .
+        \ 'END AS name, COUNT(*) AS count'. l:save_fileformat_code .
+        \ 'FROM users'. l:save_fileformat_code .
+        \ 'GROUP BY CASE id'. l:save_fileformat_code .
+        \ "WHEN '91' THEN '三浦あずさ'". l:save_fileformat_code .
+        \ "WHEN '72' THEN '如月千早'". l:save_fileformat_code .
+        \ "ELSE 'その他'". l:save_fileformat_code .
+        \ 'END;'. l:save_fileformat_code)
     End
     "}}}
   End
@@ -274,16 +278,36 @@ from users
 
     It is OK case.
       normal! ggVGy
-      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')), [
-        \ 'SELECT',
-        \ '    CASE',
-        \ "    WHEN mode = 1 THEN 'OK'",
-        \ "    WHEN name = 'azusa' THEN 'NG'",
-        \ '    END AS mode',
-        \ 'FROM users;'])
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+        \ 'SELECT'. l:save_fileformat_code .
+        \ '    CASE'. l:save_fileformat_code .
+        \ "    WHEN mode = 1 THEN 'OK'". l:save_fileformat_code .
+        \ "    WHEN name = 'azusa' THEN 'NG'". l:save_fileformat_code .
+        \ '    END AS mode'. l:save_fileformat_code .
+        \ 'FROM users;'. l:save_fileformat_code)
+    End
+    "}}}
+  End
+
+  Context Word check
+    "{{{
+    Before each
+      %delete _
+      append
+select 'chihaya', 'Cool beauty''(72)', 'count(*)'
+from users
+.
+    End
+
+    It is OK case.
+      normal! ggVGy
+      Assert Equals(sqlfix#Fix(extend({}, l:sqlfixDefaultConfig, 'keep')),
+        \ "SELECT 'chihaya', 'Cool beauty''(72)', 'count(*)'". l:save_fileformat_code .
+        \ 'FROM users;'. l:save_fileformat_code)
     End
     "}}}
   End
 End
+
 
 " vim:fdl=0:sts=2:sw=2:ts=2
