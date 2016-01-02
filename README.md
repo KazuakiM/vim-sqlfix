@@ -1,6 +1,10 @@
 #vim-sqlfix
 
-[![Build Status](https://travis-ci.org/KazuakiM/vim-sqlfix.svg)](https://travis-ci.org/KazuakiM/vim-sqlfix)
+[![](https://img.shields.io/travis/KazuakiM/vim-sqlfix.svg)](https://travis-ci.org/KazuakiM/vim-sqlfix)
+[![Build status](https://ci.appveyor.com/api/projects/status/lte1vdem9lmsyjo3/branch/master?svg=true)](https://ci.appveyor.com/project/KazuakiM/vim-sqlfix/branch/master)
+[![](https://img.shields.io/github/issues/KazuakiM/vim-sqlfix.svg)](https://github.com/KazuakiM/vim-sqlfix/issues)
+[![](https://img.shields.io/badge/doc-%3Ah%20sqlfix.txt-blue.svg)](doc/sqlfix.txt)
+[![](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 This Vim plugin is SQL pretty print.  
 vim-sqlfix's goal is support FrameWork application log format.
