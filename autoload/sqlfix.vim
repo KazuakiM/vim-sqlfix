@@ -80,7 +80,22 @@ function! sqlfix#Fix(config) abort "{{{
     let s:SqlfixStatus       = []
 
     " Get last selected
-    let l:sqlBody = substitute(s:V.Vim.Buffer.get_last_selected(), '\r\n\|\n\|\r', ' ', 'g')
+    let l:sqlBody = s:V.Vim.Buffer.get_last_selected()
+
+    " Backup escape string
+    let l:escapeList  = []
+    let l:escapeIndex = 0
+    let l:oldLineLow  = ''
+    while l:oldLineLow != l:sqlBody
+        let l:oldLineLow = l:sqlBody
+        call add(l:escapeList, substitute(matchstr(l:sqlBody, "'[^'']*'"), '&', '\\&', 'g'))
+        let l:sqlBody = substitute(l:sqlBody, "'[^'']*'", '___sqlfix'. l:escapeIndex, '')
+        let l:escapeIndex += 1
+    endwhile
+    "PP '['.l:sqlBody.': Binding..'.join(l:escapeList) .']'
+
+    " Delete newline
+    let l:sqlBody = substitute(l:sqlBody, '\r\n\|\n\|\r', ' ', 'g')
 
     " Supported FrameWork
     for l:key in keys(s:SqlfixFrameWork)
@@ -99,18 +114,6 @@ function! sqlfix#Fix(config) abort "{{{
         endif
     endfor
     "PP '['.l:sqlBody.']'
-
-    " Backup escape string
-    let l:escapeList  = []
-    let l:escapeIndex = 0
-    let l:oldLineLow  = ''
-    while l:oldLineLow != l:sqlBody
-        let l:oldLineLow = l:sqlBody
-        call add(l:escapeList, matchstr(l:sqlBody, "'[^'']*'"))
-        let l:sqlBody = substitute(l:sqlBody, "'[^'']*'", '___sqlfix'. l:escapeIndex, '')
-        let l:escapeIndex += 1
-    endwhile
-    "PP '['.l:sqlBody.': Binding..'.join(l:escapeList) .']'
 
     " Trim
     let l:oldLineLow = ''
@@ -233,9 +236,11 @@ endfunction "}}}
 
 function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
     if 0 < strlen(a:wordBlock)
-        if 0 < len(s:SqlfixStatus) && 0 < count(s:SqlfixStatus, 'row_line') && stridx(a:wordBlock, 'BETWEEN') is# -1
-            let s:SqlfixReturn = s:SqlfixReturn .' '. a:wordBlock
-            call remove(s:SqlfixStatus, -1)
+        if 0 < len(s:SqlfixStatus) && 0 < count(s:SqlfixStatus, 'row_line')
+            let s:SqlfixReturn = s:SqlfixReturn . repeat(' ', count(s:SqlfixStatus, 'bracket') * a:indent) . a:wordBlock .' '
+            while 0 < count(s:SqlfixStatus, 'row_line')
+                call remove(s:SqlfixStatus, -1)
+            endwhile
         else
             let s:SqlfixReturn = s:SqlfixReturn . repeat(' ', count(s:SqlfixStatus, 'bracket') * a:indent) . a:wordBlock . s:save_fileformat_code
         endif
@@ -249,7 +254,7 @@ function! s:SqlfixAddReturn(wordBlock, indent) abort "{{{
             endif
             let s:SqlfixCloseBracket += 1
         endwhile
-        "echo '<'.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.'>'
+        "echo '<'.join(s:SqlfixStatus).': '.s:SqlfixCloseBracket.': '.a:wordBlock.'>'
     endif
 endfunction "}}}
 
