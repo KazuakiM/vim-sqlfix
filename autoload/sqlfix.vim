@@ -211,11 +211,11 @@ function! sqlfix#Fix(config) abort "{{{
     endif
 
     " Return escape string
-    let l:escapeIndex = 0
-    for l:escapeRow in l:escapeList
-        let s:SqlfixReturn = substitute(s:SqlfixReturn, '___sqlfix'. l:escapeIndex, l:escapeRow, '')
-        let l:escapeIndex += 1
-    endfor
+    let l:escapeIndex = len(l:escapeList) - 1
+    while 0 <= l:escapeIndex
+        let s:SqlfixReturn = substitute(s:SqlfixReturn, '___sqlfix'. l:escapeIndex, remove(l:escapeList, -1), 'g')
+        let l:escapeIndex -= 1
+    endwhile
     "echo '['. s:SqlfixReturn .']'
 
     return s:SqlfixReturn
