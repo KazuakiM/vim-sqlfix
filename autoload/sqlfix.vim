@@ -168,7 +168,7 @@ function! sqlfix#Fix(config) abort "{{{
             call add(s:SqlfixStatus, 'bracket')
             let l:wordBlock = toupper(l:words)
 
-        elseif l:words is 'end'
+        elseif l:words is 'end' || l:words is 'end,'
             call s:SqlfixAddReturn(l:wordBlock, a:config.indent)
             let l:wordBlock           = toupper(l:words)
             let s:SqlfixCloseBracket -= 1
